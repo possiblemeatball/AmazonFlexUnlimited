@@ -20,9 +20,8 @@ class Offer:
 
         body = 'Location: ' + self.location + '\n'
         body += 'Date: ' + str(self.expirationDate.month) + '/' + str(self.expirationDate.day) + '\n'
-        body += 'Pay: ' + str(self.blockRate) + '\n'
-        body += 'Pay rate per hour: ' + str(self.ratePerHour) + '\n'
-        body += 'Block Duration: ' + str(blockDuration) + f'{"hour" if blockDuration == 1 else "hours"}\n'
+        body += 'Pay: $' + str(self.blockRate) + ' ($' + str(self.ratePerHour) + '/hr)\n'
+        body += 'Block Duration: ' + str(blockDuration) + f' {"hour" if blockDuration == 1 else "hours"}\n'
 
         if not self.expirationDate.minute:
             body += 'Start time: ' + str(self.expirationDate.hour) + '00\n'
