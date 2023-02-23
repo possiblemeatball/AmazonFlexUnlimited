@@ -418,7 +418,7 @@ class FlexUnlimited:
     Log.push_info("Amazon Flex Unlimited v2", "Job Search Start", self.ntfyURL, self.ntfyTopic, 1)
     while self.__retryCount < self.retryLimit:
       if not self.__retryCount % 50:
-        Log.info(self.__retryCount, 'requests attempted\n\n')
+        Log.info(f"{self.__retryCount} requests attempted\n")
 
       offersResponse = self.__getOffers()
       if offersResponse.status_code == 200:
