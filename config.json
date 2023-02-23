@@ -10,10 +10,7 @@
   "desiredWeekdays": ["MON", "tue", "Wed", "Thur", "Fri", "Sat", "Sunday"],
   "retryLimit": 10,
   "refreshInterval": 0.2,
-  "twilioAcctSid": "",
-  "twilioAuthToken": "",
-  "twilioFromNumber": "",
-  "twilioToNumber": "",
+  "ntfyTopicURL": "https://ntfy.sh/mytopic",
   "refreshToken": "",
   "accessToken": ""
 }

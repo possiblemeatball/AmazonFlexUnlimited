@@ -9,11 +9,6 @@ import base64, hashlib, hmac, gzip, secrets
 import pyaes
 from pbkdf2 import PBKDF2
 
-try:
-  from twilio.rest import Client
-except:
-  pass
-
 APP_NAME = "com.amazon.rabbit"
 APP_VERSION = "303338310"
 DEVICE_NAME = "Le X522"
@@ -76,8 +71,6 @@ class FlexUnlimited:
         self.desiredWeekdays = set()
         self.retryLimit = config["retryLimit"]  # number of jobs retrieval requests to perform
         self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
-        self.twilioFromNumber = config["twilioFromNumber"]
-        self.twilioToNumber = config["twilioToNumber"]
         self.__retryCount = 0
         self.__rate_limit_number = 1
         self.__acceptedOffers = []
@@ -89,20 +82,12 @@ class FlexUnlimited:
         
         desiredWeekdays = config["desiredWeekdays"]
 
-        twilioAcctSid = config["twilioAcctSid"]
-        twilioAuthToken = config["twilioAuthToken"]
-
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
       sys.exit()
     except FileNotFoundError:
       Log.error("Config file not found. Ensure a properly formatted 'config.json' file exists in the root directory.")
       sys.exit()
-
-    if twilioAcctSid != "" and twilioAuthToken != "" and self.twilioFromNumber != "" and self.twilioToNumber != "":
-      self.twilioClient = Client(twilioAcctSid, twilioAuthToken)
-    else:
-      self.twilioClient = None
       
     self.__setDesiredWeekdays(desiredWeekdays)
 
@@ -401,11 +386,6 @@ class FlexUnlimited:
 
     if request.status_code == 200:
       self.__acceptedOffers.append(offer)
-      if self.twilioClient is not None:
-        self.twilioClient.messages.create(
-          to=self.twilioToNumber,
-          from_=self.twilioFromNumber,
-          body=offer.toString())
       Log.info(f"Successfully accepted an offer.")
     else:
       Log.error(f"Unable to accept an offer. Request returned status code {request.status_code}")
