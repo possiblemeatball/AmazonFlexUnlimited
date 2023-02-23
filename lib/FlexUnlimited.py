@@ -68,6 +68,7 @@ class FlexUnlimited:
         self.arrivalBuffer = config["arrivalBuffer"]  # arrival buffer in minutes
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
+        self.desiredWeekdays = set()
         desiredWeekdays = config["desiredWeekdays"]
         self.retryLimit = config["retryLimit"]  # number of jobs retrieval requests to perform
         self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
