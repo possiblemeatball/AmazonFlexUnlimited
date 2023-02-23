@@ -416,10 +416,10 @@ class FlexUnlimited:
     self.__acceptOffer(offer)
 
   def run(self):
-    Log.push_info("Amazon Flex Unlimited v2", "Job Search Start", self.ntfyURL, self.ntfyTopic, 1)
+    Log.push_info("Offer Search", "Searching for offers...", self.ntfyURL, self.ntfyTopic, 1)
     while self.__retryCount < self.retryLimit:
-      if not self.__retryCount % 50:
-        Log.info(f"{self.__retryCount} requests attempted\n")
+      if not self.__retryCount % 50 and self.__retryCount != 0:
+        Log.push_info("Offer Search", f"{self.__retryCount} requests attempted", self.ntfyURL, self.ntfyTopic, 2)
 
       offersResponse = self.__getOffers()
       if offersResponse.status_code == 200:
@@ -438,10 +438,10 @@ class FlexUnlimited:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        Log.push_info("Amazon Flex Unlimited v2", "Job Search Resume", self.ntfyURL, self.ntfyTopic, 1)
+        Log.push_info("Offer Search", "Job Search Resume", self.ntfyURL, self.ntfyTopic, 1)
       else:
-        Log.push_error("Amazon Flex Unlimited v2", f"An unknown error has occured, response status code {offersResponse.status_code}", self.ntfyURL, self.ntfyTopic, 4)
+        Log.push_error("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}", self.ntfyURL, self.ntfyTopic, 4)
         break
       time.sleep(self.refreshInterval)
     
-    Log.push_info("Amazon Flex Unlimited v2", f"Job Search End\nAccepted {len(self.__acceptedOffers)} offers in {time.time() - self.__startTimestamp} seconds", self.ntfyURL, self.ntfyTopic)
+    Log.push_info("Offer Search", f"Done searching for offers, accepted {len(self.__acceptedOffers)} in {time.time() - self.__startTimestamp} seconds", self.ntfyURL, self.ntfyTopic)
