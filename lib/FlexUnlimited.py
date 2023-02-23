@@ -68,9 +68,11 @@ class FlexUnlimited:
         self.arrivalBuffer = config["arrivalBuffer"]  # arrival buffer in minutes
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
-        self.desiredWeekdays = set()
+        self.desiredWeekdays = config["desiredWeekdays"]
         self.retryLimit = config["retryLimit"]  # number of jobs retrieval requests to perform
         self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
+        self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
+        self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
         self.__retryCount = 0
         self.__rate_limit_number = 1
         self.__acceptedOffers = []
@@ -79,8 +81,6 @@ class FlexUnlimited:
         self.refreshToken = config["refreshToken"]
         self.accessToken = config["accessToken"]
         self.session = requests.Session()
-        
-        desiredWeekdays = config["desiredWeekdays"]
 
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
@@ -386,9 +386,9 @@ class FlexUnlimited:
 
     if request.status_code == 200:
       self.__acceptedOffers.append(offer)
-      Log.info(f"Successfully accepted an offer.")
+      Log.push_info("Successfully Accepted Offer", offer.toString(), self.ntfyURL, self.ntfyTopic, 5)
     else:
-      Log.error(f"Unable to accept an offer. Request returned status code {request.status_code}")
+      Log.push_error("Unable to Accept Offer", f"Response: {request.status_code} {'Offer Already Taken' if request.status_code == 410 else 'Unknown'}", self.ntfyURL, self.ntfyTopic, 4)
 
   def __processOffer(self, offer: Offer):
     if offer.hidden:
@@ -414,10 +414,10 @@ class FlexUnlimited:
     self.__acceptOffer(offer)
 
   def run(self):
-    Log.info("Starting job search...")
+    Log.push_info("Amazon Flex Unlimited v2", "Job Search Start", self.ntfyURL, self.ntfyTopic, 1)
     while self.__retryCount < self.retryLimit:
       if not self.__retryCount % 50:
-        print(self.__retryCount, 'requests attempted\n\n')
+        Log.info(self.__retryCount, 'requests attempted\n\n')
 
       offersResponse = self.__getOffers()
       if offersResponse.status_code == 200:
@@ -430,16 +430,16 @@ class FlexUnlimited:
         self.__retryCount += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
-        Log.info("Rate limit reached. Waiting for " + str(minutes_to_wait) + " minutes.")
+        Log.push_info("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes.", self.ntfyURL, self.ntfyTopic, 3)
         time.sleep(minutes_to_wait * 60)
         if self.__rate_limit_number < 4:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        Log.info("Resuming search.")
+        Log.push_info("Amazon Flex Unlimited v2", "Job Search Resume", self.ntfyURL, self.ntfyTopic, 1)
       else:
-        Log.error(offersResponse.json())
+        Log.push_error("Amazon Flex Unlimited v2", f"An unknown error has occured, response status code {offersResponse.status_code}", self.ntfyURL, self.ntfyTopic, 4)
         break
       time.sleep(self.refreshInterval)
-    Log.info("Job search cycle ending...")
-    Log.info(f"Accepted {len(self.__acceptedOffers)} offers in {time.time() - self.__startTimestamp} seconds")
+    
+    Log.push_info("Amazon Flex Unlimited v2", f"Job Search End\nAccepted {len(self.__acceptedOffers)} offers in {time.time() - self.__startTimestamp} seconds", self.ntfyURL, self.ntfyTopic)
