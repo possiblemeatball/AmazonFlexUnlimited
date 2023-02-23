@@ -69,7 +69,6 @@ class FlexUnlimited:
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
         self.desiredWeekdays = set()
-        desiredWeekdays = config["desiredWeekdays"]
         self.retryLimit = config["retryLimit"]  # number of jobs retrieval requests to perform
         self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
@@ -82,6 +81,8 @@ class FlexUnlimited:
         self.refreshToken = config["refreshToken"]
         self.accessToken = config["accessToken"]
         self.session = requests.Session()
+
+        desiredWeekdays = config["desiredWeekdays"]
 
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
