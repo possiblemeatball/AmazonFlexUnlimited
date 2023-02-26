@@ -527,7 +527,7 @@ class FlexUnlimited:
       minutes = deltaTime.seconds / 60
       attempted = self.__foundOffers - self.__ignoredOffers
       message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-      message = message + f"in {deltaTime.strftime('%T')}, "
+      message = message + f"in {str(deltaTime)}, "
       message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
       message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}. "
       message = message + f"({self.__attempts} {'requests' if self.__attempts != 1 else 'request'})"
