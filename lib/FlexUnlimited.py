@@ -470,19 +470,19 @@ class FlexUnlimited:
 
     return True
 
-  def log_activity(self, start: datetime):
+  def watch_log(self):
     while not self.foundOffer and threading.main_thread().is_alive():
-      deltaTime = (datetime.now() - start).seconds
-      if not deltaTime % 60 and deltaTime != 0:
-        minutes = deltaTime / 60
-        attempted = self.__foundOffers - self.__ignoredOffers
-        message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-        message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
-        message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
-        message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
-        self.push_info("Offer Search", message)
-        Log.info(message)
-      time.sleep(1)
+      time.sleep(60)
+
+      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
+      minutes = deltaTime / 60
+      attempted = self.__foundOffers - self.__ignoredOffers
+      message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
+      message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
+      message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
+      message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
+      self.push_info("Offer Search", message)
+      Log.info(message)
 
   def run(self):
     now = datetime.now()
@@ -490,8 +490,8 @@ class FlexUnlimited:
     Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
 
     ignoredOffers = list()
-    activityThread = threading.Thread(target=self.log_activity, args=(now,))
-    activityThread.start()
+    watchdogThread = threading.Thread(target=self.watch_log)
+    watchdogThread.start()
 
     while not self.foundOffer:
       offersResponse = self.__getOffers()
