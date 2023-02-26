@@ -477,7 +477,7 @@ class FlexUnlimited:
     Log.info(f"Starting at {datetime.now().strftime('%H:%M:%S')}")
 
     ignoredOffers = list()
-    lastReport = datetime.now()
+    lastPush = datetime.now()
 
     while not self.foundOffer:
       offersResponse = self.__getOffers()
@@ -522,19 +522,19 @@ class FlexUnlimited:
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
       
-      deltaTime = (datetime.now() - lastReport).seconds
+      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
+      minutes = deltaTime / 60
+      attempted = self.__foundOffers - self.__ignoredOffers
+      message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
+      message = message + f"in {'{0:.2}'.format(minutes)} {'minutes' if minutes < 1.1 and minutes > 1 else 'minute'}, "
+      message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
+      message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}. "
+      message = message + f"({self.__attempts} {'requests' if self.__attempts != 1 else 'request'})"
+      Log.info(message)
+      deltaTime = (datetime.now() - lastPush).seconds
       if deltaTime >= 60:
-        deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
-        minutes = deltaTime / 60
-        attempted = self.__foundOffers - self.__ignoredOffers
-        message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-        message = message + f"in {'{0:.2}'.format(minutes)} {'minutes' if minutes != 1 else 'minute'}, "
-        message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
-        message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}. "
-        message = message + f"({self.__attempts} {'requests' if self.__attempts != 1 else 'request'})"
         self.push_info("Offer Search", message)
-        Log.info(message)
-        lastReport = datetime.now()
+        lastPush = datetime.now()
       
       self.__attempts += 1
       time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
