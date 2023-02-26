@@ -1,8 +1,6 @@
 {
-  "username": "",
-  "password": "",
   "minBlockRate": 150,
-  "minPayRatePerHour": 32,
+  "minPayPerHour": 32,
   "arrivalBuffer": 45,
   "desiredWarehouses": [],
   "desiredStartTime": "00:00",
@@ -11,7 +9,5 @@
   "minRefreshInterval": 1.0,
   "maxRefreshInterval": 5.0,
   "ntfyURL": "https://ntfy.sh/",
-  "ntfyTopic": "mytopic",
-  "refreshToken": "",
-  "accessToken": ""
+  "ntfyTopic": "mytopic"
 }

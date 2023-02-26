@@ -57,44 +57,53 @@ class FlexUnlimited:
   }
 
   def __init__(self) -> None:
+    self.__startTimestamp = time.time()
+    self.foundOffer = False
+    self.__offersRequestCount = 0
+    self.__rate_limit_number = 1
+    self.__service_unavailable_number = 1
+    self.__ignoredOffers = list()
+    self.__failedOffers = list()
+
     try:
+      with open("account.json") as accountFile:
+        account = json.load(accountFile)
+        self.username = account["username"]
+        self.password = account["password"]
+        self.refreshToken = account["refreshToken"]
+        self.accessToken = account["accessToken"]
+
+    except KeyError as nullKey:
+      Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
+      sys.exit()
+    except FileNotFoundError:
+      Log.error("Account file not found. Ensure a properly formatted 'account.json' file exists in the root directory.")
+      sys.exit()
+
+    try: 
       with open("config.json") as configFile:
         config = json.load(configFile)
-        self.username = config["username"]
-        self.password = config["password"]
-        self.desiredWarehouses = config["desiredWarehouses"] if len(config["desiredWarehouses"]) >= 1 else []  # list of warehouse ids
         self.minBlockRate = config["minBlockRate"]
-        self.minPayRatePerHour = config["minPayRatePerHour"]
+        self.minPayPerHour = config["minPayPerHour"]
         self.arrivalBuffer = config["arrivalBuffer"]  # arrival buffer in minutes
+        self.desiredWarehouses = config["desiredWarehouses"] if len(config["desiredWarehouses"]) >= 1 else []  # list of warehouse ids
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
-        self.desiredWeekdays = set()
+        self.desiredWeekdays = config["desiredWeekdays"]
         self.minRefreshInterval = config["minRefreshInterval"]  # sets minimum delay in seconds between getOffers requests
         self.maxRefreshInterval = config["maxRefreshInterval"]  # sets maximum delay in seconds between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
-        self.foundOffer = False
-        self.__offersRequestCount = 0
-        self.__rate_limit_number = 1
-        self.__service_unavailable_number = 1
-        self.__ignoredOffers = list()
-        self.__failedOffers = list()
-        self.__startTimestamp = time.time()
-        self.__requestHeaders = FlexUnlimited.allHeaders.get("FlexCapacityRequest")
-        self.refreshToken = config["refreshToken"]
-        self.accessToken = config["accessToken"]
-        self.session = requests.Session()
-
-        desiredWeekdays = config["desiredWeekdays"]
-
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
       sys.exit()
     except FileNotFoundError:
       Log.error("Config file not found. Ensure a properly formatted 'config.json' file exists in the root directory.")
       sys.exit()
-      
-    self.__setDesiredWeekdays(desiredWeekdays)
+
+    self.__requestHeaders = FlexUnlimited.allHeaders.get("FlexCapacityRequest")
+    self.session = requests.Session()
+    self.__setDesiredWeekdays(self.desiredWeekdays)
 
     if self.refreshToken == "":
       self.__registerAccount()
@@ -193,21 +202,21 @@ class FlexUnlimited:
     self.accessToken = tokens['access_token']
     self.refreshToken = tokens['refresh_token']
     try:
-      with open("config.json", "r+") as configFile:
-        config = json.load(configFile)
-        config["accessToken"] = self.accessToken
-        config["refreshToken"] = self.refreshToken
-        configFile.seek(0)
-        json.dump(config, configFile, indent=2)
-        configFile.truncate()
+      with open("account.json", "r+") as accountFile:
+        account = json.load(accountFile)
+        account["accessToken"] = self.accessToken
+        account["refreshToken"] = self.refreshToken
+        accountFile.seek(0)
+        json.dump(account, accountFile, indent=2)
+        accountFile.truncate()
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
-      Log.warn("Displaying refresh token because save to config file failed. Please copy the refresh token into the config file manually.")
+      Log.warn("Displaying refresh token because save to account file failed. Please copy the refresh token into the account.json file manually.")
       Log.info("Refresh token: " + self.refreshToken)
       sys.exit()
     except FileNotFoundError:
-      Log.error("Config file not found. Ensure a properly formatted 'config.json' file exists in the root directory.")
-      Log.warn("Displaying refresh token because save to config file failed. Please copy the refresh token into the config file manually.")
+      Log.error("Account file not found. Ensure a properly formatted 'account.json' file exists in the root directory.")
+      Log.warn("Displaying refresh token because save to config file failed. Please copy the refresh token into the account.json file manually.")
       Log.info("Refresh token: " + self.refreshToken)
       sys.exit()
     Log.success("Account registration successful")
@@ -252,17 +261,17 @@ class FlexUnlimited:
     res = self.session.post(FlexUnlimited.routes.get("RequestNewAccessToken"), json=data, headers=headers).json()
     self.accessToken = res['access_token']
     try:
-      with open("config.json", "r+") as configFile:
-        config = json.load(configFile)
-        config["accessToken"] = self.accessToken
-        configFile.seek(0)
-        json.dump(config, configFile, indent=2)
-        configFile.truncate()
+      with open("account.json", "r+") as accountFile:
+        account = json.load(accountFile)
+        account["accessToken"] = self.accessToken
+        accountFile.seek(0)
+        json.dump(account, accountFile, indent=2)
+        accountFile.truncate()
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
       sys.exit()
     except FileNotFoundError:
-      Log.error("Config file not found. Ensure a properly formatted 'config.json' file exists in the root directory.")
+      Log.error("Account file not found. Ensure a properly formatted 'account.json' file exists in the root directory.")
       sys.exit()
     self.__requestHeaders["x-amz-access-token"] = self.accessToken
 
