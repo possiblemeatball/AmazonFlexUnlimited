@@ -1,6 +1,6 @@
 from lib.Offer import Offer
 from lib.Log import Log
-import requests, time, os, sys, json, threading
+import requests, time, os, sys, json
 from requests.models import Response
 from datetime import datetime
 from prettytable import PrettyTable
@@ -476,8 +476,6 @@ class FlexUnlimited:
 
     ignoredOffers = list()
     lastReport = datetime.now()
-    watchdogThread = threading.Thread(target=self.watch_log)
-    watchdogThread.start()
 
     while not self.foundOffer:
       offersResponse = self.__getOffers()
