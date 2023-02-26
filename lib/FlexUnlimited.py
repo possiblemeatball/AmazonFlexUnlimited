@@ -74,7 +74,7 @@ class FlexUnlimited:
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
         self.foundOffer = False
-        self.__attempts = 0
+        self.__offersRequestCount = 0
         self.__rate_limit_number = 1
         self.__ignoredOffers = list()
         self.__failedOffers = list()
