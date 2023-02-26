@@ -69,8 +69,8 @@ class FlexUnlimited:
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
         self.desiredWeekdays = set()
-        self.minRefreshInterval = config["minRefreshInterval"]  # sets minimum delay in milliseconds between getOffers requests
-        self.maxRefreshInterval = config["maxRefreshInterval"]  # sets maximum delay in milliseconds between getOffers requests
+        self.minRefreshInterval = config["minRefreshInterval"]  # sets minimum delay in seconds between getOffers requests
+        self.maxRefreshInterval = config["maxRefreshInterval"]  # sets maximum delay in seconds between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
         self.foundOffer = False
@@ -533,7 +533,7 @@ class FlexUnlimited:
         self.push_info("Offer Search", message)
         Log.info(message)
         lastReport = datetime.now()
-      time.sleep()
+      time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
 
     now = datetime.now()
     if self.foundOffer:
