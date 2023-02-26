@@ -125,12 +125,13 @@ class FlexUnlimited:
     if len(desiredWeekdays) == 0:
       self.desiredWeekdays = None
     else:
+      self.desiredWeekdays.clear()
       for day in desiredWeekdays:
         dayAbbreviated = day[:3].lower()
         if dayAbbreviated not in weekdayMap:
           Log.error("Weekday '" + day + "' is misspelled. Please correct config.json file and restart program.")
           exit()
-        self.desiredWeekdays.add(weekdayMap[dayAbbreviated])
+        self.desiredWeekdays.append(weekdayMap[dayAbbreviated])
       if len(self.desiredWeekdays) == 7:
         self.desiredWeekdays = None
 
