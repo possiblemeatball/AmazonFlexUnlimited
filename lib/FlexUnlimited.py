@@ -520,7 +520,7 @@ class FlexUnlimited:
         self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
 
-      deltaTime = (self.__startTimestamp - datetime.now()).seconds
+      deltaTime = (datetime.fromtimestamp(self.__startTimestamp) - datetime.now()).seconds
       if not deltaTime % 60 and deltaTime != 0:
         message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
         message = message + f"ignoring {self.__ignoredOffers} bad offers and "
