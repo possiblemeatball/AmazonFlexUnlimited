@@ -78,7 +78,6 @@ class FlexUnlimited:
         self.__rate_limit_number = 1
         self.__ignoredOffers = list()
         self.__failedOffers = list()
-        self.__foundOffers = 0
         self.__startTimestamp = time.time()
         self.__requestHeaders = FlexUnlimited.allHeaders.get("FlexCapacityRequest")
         self.refreshToken = config["refreshToken"]
@@ -511,8 +510,6 @@ class FlexUnlimited:
               self.__failedOffers.append(offerObject.id)
           else:
             self.__ignoredOffers.append(offerObject.id)
-
-          self.__foundOffers += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
         if self.__rate_limit_number < 4:
@@ -526,8 +523,7 @@ class FlexUnlimited:
         self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes...")
         time.sleep(minutes_to_wait * 60)
 
-        self.__ignoredOffers.clear()
-        self.__failedOffers.clear()
+        lastPush = datetime.now()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
         self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
       elif offersResponse.status_code == 403:
@@ -539,8 +535,9 @@ class FlexUnlimited:
         break
       
       deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp))
+      foundOffers = len(self.__ignoredOffers) + len(self.__failedOffers)
       minutes = deltaTime.seconds / 60
-      message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
+      message = f"Discovered {foundOffers} {'offers' if foundOffers != 1 else 'offer'} "
       message = message + f"in {str(deltaTime)}, "
       message = message + f"ignoring {len(self.__ignoredOffers)} bad {'offers' if len(self.__ignoredOffers) != 1 else 'offer'} and "
       message = message + f"attempting {len(self.__failedOffers)} good {'offers' if len(self.__failedOffers) != 1 else 'offer'}. "
