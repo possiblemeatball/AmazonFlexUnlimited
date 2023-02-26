@@ -455,12 +455,12 @@ class FlexUnlimited:
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        Log.info(f"(skipped) offer blockRate {'{0:.3}'.format(offer.blockRate)} is less than minBlockRate {'{0:.3}'.format(self.minBlockRate)}")
+        Log.info(f"(skipped) offer blockRate {'{0:.3g}'.format(offer.blockRate)} is less than minBlockRate {'{0:.3g}'.format(self.minBlockRate)}")
         return False
 
     if self.minPayRatePerHour:
       if offer.ratePerHour < self.minPayRatePerHour:
-        Log.info(f"(skipped) offer ratePerHour {'{0:.3}'.format(offer.ratePerHour)} is less than minPayRatePerHour {'{0:.3}'.format(self.minPayRatePerHour)}")
+        Log.info(f"(skipped) offer ratePerHour {'{0:.3g}'.format(offer.ratePerHour)} is less than minPayRatePerHour {'{0:.3g}'.format(self.minPayRatePerHour)}")
         return False
 
     if self.arrivalBuffer:
