@@ -76,7 +76,8 @@ class FlexUnlimited:
         self.foundOffer = False
         self.__attempts = 0
         self.__rate_limit_number = 1
-        self.__ignoredOffers = 0
+        self.__ignoredOffers = list()
+        self.__failedOffers = list()
         self.__foundOffers = 0
         self.__startTimestamp = time.time()
         self.__requestHeaders = FlexUnlimited.allHeaders.get("FlexCapacityRequest")
@@ -488,19 +489,17 @@ class FlexUnlimited:
     Log.info(f"Starting at {datetime.now().strftime('%T')}")
     self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
 
-    ignoredOffers = list()
     lastPush = datetime.now()
-
     while not self.foundOffer:
       offersResponse = self.__getOffers()
-      self.__attempts += 1
+      self.__offersRequestCount += 1
       if offersResponse.status_code == 200:
         currentOffers = offersResponse.json().get("offerList")
         currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
                            reverse=True)
         for offer in currentOffers:
           offerObject = Offer(offerResponseObject=offer)
-          if ignoredOffers.count(offerObject.id) > 0:
+          if self.__ignoredOffers.count(offerObject.id) > 0 or self.__failedOffers.count(offerObject.id) > 0:
             continue
 
           if self.__processOffer(offerObject):
@@ -509,21 +508,26 @@ class FlexUnlimited:
               self.foundOffer = True
               break
             else:
-              ignoredOffers.append(offerObject.id)
+              self.__failedOffers.append(offerObject.id)
           else:
-            ignoredOffers.append(offerObject.id)
-            self.__ignoredOffers += 1
+            self.__ignoredOffers.append(offerObject.id)
 
           self.__foundOffers += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
-        Log.warn("Rate limit reached, waiting for " + str(minutes_to_wait) + " minutes...")
-        self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes...")
-        time.sleep(minutes_to_wait * 60)
         if self.__rate_limit_number < 4:
           self.__rate_limit_number += 1
         else:
-          self.__rate_limit_number = 1
+          Log.error(f"Rate limit reached too many times! ({self.__rate_limit_number} times)")
+          self.push_err("Rate Limit Reached", f"Rate limit reached too many times! ({self.__rate_limit_number} times)")
+          break
+        
+        Log.warn("Rate limit reached, waiting for " + str(minutes_to_wait) + " minutes...")
+        self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes...")
+        time.sleep(minutes_to_wait * 60)
+
+        self.__ignoredOffers.clear()
+        self.__failedOffers.clear()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
         self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
       elif offersResponse.status_code == 403:
@@ -536,12 +540,11 @@ class FlexUnlimited:
       
       deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp))
       minutes = deltaTime.seconds / 60
-      attempted = self.__foundOffers - self.__ignoredOffers
       message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
       message = message + f"in {str(deltaTime)}, "
-      message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
-      message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}. "
-      message = message + f"({self.__attempts} {'requests' if self.__attempts != 1 else 'request'})"
+      message = message + f"ignoring {self.__ignoredOffers.count()} bad {'offers' if self.__ignoredOffers.count() != 1 else 'offer'} and "
+      message = message + f"attempting {self.__failedOffers.count()} good {'offers' if self.__failedOffers.count() != 1 else 'offer'}. "
+      message = message + f"({self.__offersRequestCount} {'requests' if self.__offersRequestCount != 1 else 'request'})"
       Log.info(message)
       if (datetime.now() - lastPush).seconds >= 60:
         self.push_info("Offer Search", message)
