@@ -72,6 +72,7 @@ class FlexUnlimited:
         self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
+        self.foundOffer = False
         self.__rate_limit_number = 1
         self.__ignoredOffers = 0
         self.__foundOffers = 0
@@ -470,13 +471,14 @@ class FlexUnlimited:
     return True
 
   def log_activity(self, start: datetime):
-    deltaTime = (datetime.now() - start).seconds
-    if not deltaTime % 60 and deltaTime != 0:
-      message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
-      message = message + f"ignoring {self.__ignoredOffers} bad offers and "
-      message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
-      self.push_info("Offer Search", message)
-      Log.info(message)
+    while not self.foundOffer:
+      deltaTime = (datetime.now() - start).seconds
+      if not deltaTime % 60 and deltaTime != 0:
+        message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
+        message = message + f"ignoring {self.__ignoredOffers} bad offers and "
+        message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
+        self.push_info("Offer Search", message)
+        Log.info(message)
 
   def run(self):
     now = datetime.now()
@@ -484,12 +486,10 @@ class FlexUnlimited:
     Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
 
     ignoredOffers = list()
-    found = False
-
-    activityThread = threading.Thread(target=log_activity, args=(self, now))
+    activityThread = threading.Thread(target=self.log_activity, args=(self, now))
     activityThread.start()
 
-    while not found:
+    while not self.foundOffer:
       offersResponse = self.__getOffers()
       if offersResponse.status_code == 200:
         currentOffers = offersResponse.json().get("offerList")
@@ -503,7 +503,7 @@ class FlexUnlimited:
           if self.__processOffer(offerObject):
             Log.info("Found an offer, attempting to accept...")
             if self.__acceptOffer(offerObject):
-              found = True
+              self.foundOffer = True
               break
             else:
               ignoredOffers.append(offerObject.id)
@@ -532,7 +532,7 @@ class FlexUnlimited:
       time.sleep(self.refreshInterval)
 
     now = datetime.now()
-    if found:
+    if self.foundOffer:
       Log.info(f"Stopping at {now.strftime('%H:%M:%S %Z')} after accepting an offer")
       self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now.strftime('%H:%M:%S %Z')} after accepting an offer")
     else:
