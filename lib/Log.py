@@ -1,14 +1,15 @@
 import requests, json
+from datetime import datetime
 
 class Log:
     
     @staticmethod 
     def info(message: str):
-        print(f'INFO: {message}', flush=True)
+        print(f'[{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}] [INFO] {message}', flush=True)
 
     @staticmethod
     def error(message: str):
-        print(f'ERROR: {message}', flush=True)
+        print(f'[{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}] [ERROR] {message}', flush=True)
     
     @staticmethod 
     def push_info(title: str, message: str, ntfy: str, topic: str, priority: int):
@@ -21,7 +22,6 @@ class Log:
                 "priority": priority,
             })
         )
-        Log.info(message)
 
     @staticmethod
     def push_error(title: str, message: str, ntfy: str, topic: str, priority: int):
@@ -34,4 +34,3 @@ class Log:
                 "priority": priority,
             })
         )
-        Log.error(message)
