@@ -1,6 +1,6 @@
 from lib.Offer import Offer
 from lib.Log import Log
-import requests, time, os, sys, json
+import requests, time, os, sys, json, random
 from requests.models import Response
 from datetime import datetime
 from prettytable import PrettyTable
@@ -69,7 +69,8 @@ class FlexUnlimited:
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
         self.desiredWeekdays = set()
-        self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
+        self.minRefreshInterval = config["minRefreshInterval"]  # sets minimum delay in milliseconds between getOffers requests
+        self.maxRefreshInterval = config["maxRefreshInterval"]  # sets maximum delay in milliseconds between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
         self.foundOffer = False
@@ -532,7 +533,7 @@ class FlexUnlimited:
         self.push_info("Offer Search", message)
         Log.info(message)
         lastReport = datetime.now()
-      time.sleep(self.refreshInterval)
+      time.sleep()
 
     now = datetime.now()
     if self.foundOffer:
