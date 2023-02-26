@@ -446,10 +446,6 @@ class FlexUnlimited:
       
 
   def __processOffer(self, offer: Offer):
-    if offer.hidden:
-      Log.info("(skipped) offer hidden")
-      return False
-      
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
         Log.info(f"(skipped) offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}")
@@ -474,9 +470,9 @@ class FlexUnlimited:
     return True
 
   def run(self):
-    now = datetime.now().strftime("%a %b %d %H:%M:%S %Z")
-    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now}")
-    Log.info(f"Starting at {now}")
+    now = datetime.now()
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
+    Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
 
     ignoredOffers = list()
     found = False
@@ -489,7 +485,7 @@ class FlexUnlimited:
                            reverse=True)
         for offer in currentOffers:
           offerObject = Offer(offerResponseObject=offer)
-          if ignoredOffers.count(offerObject.id) > 0:
+          if ignoredOffers.count(offerObject.id) > 0 or offerObject.hidden:
             continue
 
           if self.__processOffer(offerObject):
@@ -521,7 +517,7 @@ class FlexUnlimited:
         self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
 
-      deltaTime = (datetime.fromtimestamp(self.__startTimestamp) - datetime.now()).seconds
+      deltaTime = (datetime.now() - now).seconds
       if not deltaTime % 60 and deltaTime != 0:
         message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
         message = message + f"ignoring {self.__ignoredOffers} bad offers and "
@@ -531,10 +527,10 @@ class FlexUnlimited:
 
       time.sleep(self.refreshInterval)
 
-    now = datetime.now().strftime("%a %b %d %H:%M:%S %Z")
+    now = datetime.now()
     if found:
-      Log.info(f"Stopping at {now} after accepting an offer")
-      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now} after accepting an offer")
+      Log.info(f"Stopping at {now.strftime('%H:%M:%S %Z')} after accepting an offer")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now.strftime('%H:%M:%S %Z')} after accepting an offer")
     else:
-      Log.error(f"Stopping at {now} after encountering a fatal error")
-      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now} after encountering a fatal error")
+      Log.error(f"Stopping at {now.strftime('%H:%M:%S %Z')} after encountering a fatal error")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now.strftime('%H:%M:%S %Z')} after encountering a fatal error")
