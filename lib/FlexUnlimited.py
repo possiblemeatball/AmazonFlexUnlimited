@@ -74,6 +74,7 @@ class FlexUnlimited:
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
         self.foundOffer = False
+        self.__attempts = 0
         self.__rate_limit_number = 1
         self.__ignoredOffers = 0
         self.__foundOffers = 0
@@ -529,10 +530,13 @@ class FlexUnlimited:
         message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
         message = message + f"in {'{0:.2}'.format(minutes)} {'minutes' if minutes != 1 else 'minute'}, "
         message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
-        message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
+        message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}. "
+        message = message + f"({self.__attempts} {'requests' if self.__attempts != 1 else 'request'})"
         self.push_info("Offer Search", message)
         Log.info(message)
         lastReport = datetime.now()
+      
+      self.__attempts += 1
       time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
 
     now = datetime.now()
