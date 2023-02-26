@@ -474,8 +474,9 @@ class FlexUnlimited:
     return True
 
   def run(self):
-    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {self.__getAmzDate()}")
-    Log.info(f"Starting at {self.__getAmzDate()}")
+    now = datetime.fromtimestamp(time.gmtime()).strftime("%a %b %d %H:%M:%S %Z")
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now}")
+    Log.info(f"Starting at {now}")
 
     ignoredOffers = list()
     found = False
@@ -530,9 +531,10 @@ class FlexUnlimited:
 
       time.sleep(self.refreshInterval)
 
+    now = datetime.fromtimestamp(time.gmtime()).strftime("%a %b %d %H:%M:%S %Z")
     if found:
-      Log.info(f"Stopping at {self.__getAmzDate()} after accepting an offer")
-      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {self.__getAmzDate()} after accepting an offer")
+      Log.info(f"Stopping at {now} after accepting an offer")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now} after accepting an offer")
     else:
-      Log.error(f"Stopping at {self.__getAmzDate()} after encountering a fatal error")
-      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {self.__getAmzDate()} after encountering a fatal error")
+      Log.error(f"Stopping at {now} after encountering a fatal error")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now} after encountering a fatal error")

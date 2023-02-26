@@ -1,20 +1,25 @@
 import requests, json
 from datetime import datetime
+from time import gmtime
 
 class Log:
     
     @staticmethod 
     def info(message: str):
-        print(f'[{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}] [INFO] {message}', flush=True)
+        now = datetime.fromtimestamp(gmtime()).strftime("%Y/%m/%d %H:%M:%S")
+        print(f'[{now}] [INFO] {message}', flush=True)
     
     @staticmethod 
     def warn(message: str):
-        print(f'[{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}] [WARN] {message}', flush=True)
+        now = datetime.fromtimestamp(gmtime()).strftime("%Y/%m/%d %H:%M:%S")
+        print(f'[{now}] [WARN] {message}', flush=True)
 
     @staticmethod
     def error(message: str):
-        print(f'[{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}] [ERROR] {message}', flush=True)
+        now = datetime.fromtimestamp(gmtime()).strftime("%Y/%m/%d %H:%M:%S")
+        print(f'[{now}] [ERROR] {message}', flush=True)
 
     @staticmethod 
     def success(message: str):
-        print(f'[{datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")}] [SUCCESS] {message}', flush=True)
+        now = datetime.fromtimestamp(gmtime()).strftime("%Y/%m/%d %H:%M:%S")
+        print(f'[{now}] [SUCCESS] {message}', flush=True)
