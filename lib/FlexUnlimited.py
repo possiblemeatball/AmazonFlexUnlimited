@@ -1,6 +1,6 @@
 from lib.Offer import Offer
 from lib.Log import Log
-import requests, time, os, sys, json
+import requests, time, os, sys, json, threading
 from requests.models import Response
 from datetime import datetime
 from prettytable import PrettyTable
@@ -469,6 +469,15 @@ class FlexUnlimited:
 
     return True
 
+  def log_activity(self, start: datetime):
+    deltaTime = (datetime.now() - start).seconds
+    if not deltaTime % 60 and deltaTime != 0:
+      message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
+      message = message + f"ignoring {self.__ignoredOffers} bad offers and "
+      message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
+      self.push_info("Offer Search", message)
+      Log.info(message)
+
   def run(self):
     now = datetime.now()
     self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
@@ -476,6 +485,9 @@ class FlexUnlimited:
 
     ignoredOffers = list()
     found = False
+
+    activityThread = threading.Thread(target=log_activity, args=(self, now))
+    activityThread.start()
 
     while not found:
       offersResponse = self.__getOffers()
@@ -516,14 +528,6 @@ class FlexUnlimited:
       else:
         self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
-
-      deltaTime = (datetime.now() - now).seconds
-      if not deltaTime % 60 and deltaTime != 0:
-        message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
-        message = message + f"ignoring {self.__ignoredOffers} bad offers and "
-        message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
-        self.push_info("Offer Search", message)
-        Log.info(message)
 
       time.sleep(self.refreshInterval)
 
