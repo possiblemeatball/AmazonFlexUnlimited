@@ -506,17 +506,17 @@ class FlexUnlimited:
               self.__failedOffers.append(offerObject.id)
           else:
             Log.warn(f"skipped {processMessage}")
-            pushLog.append(f"skipped {processMessage}")
+            pushLog.append(processMessage)
             self.__ignoredOffers.append(offerObject.id)
           
           newOffers += 1
         
         Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
-        
+
         if len(pushLog) > 0:
-          message = f"Skipped {len(pushLog)} {'offers' if len(pushLog) != 1 else 'offer'}: \n"
+          message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
-            message = message + f"\t{push}\n"
+            message = message + f" * {push}\n"
           self.push_warn("Offer Search", message)
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
