@@ -486,9 +486,9 @@ class FlexUnlimited:
         currentOffers = offersResponse.json().get("offerList")
         currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
                            reverse=True)
-        for offer in currentOffers:          
+        for offer in currentOffers:
           offerObject = Offer(offerResponseObject=offer)
-          if ignoredOffers.count(offerObject) > 0:
+          if ignoredOffers.count(offerObject.id) > 0:
             continue
 
           if self.__processOffer(offerObject):
@@ -497,9 +497,9 @@ class FlexUnlimited:
               found = True
               break
             else:
-              ignoredOffers.append(offerObject)
+              ignoredOffers.append(offerObject.id)
           else:
-            ignoredOffers.append(offerObject)
+            ignoredOffers.append(offerObject.id)
             self.__ignoredOffers += 1
 
           self.__foundOffers += 1
