@@ -481,6 +481,7 @@ class FlexUnlimited:
 
     while not self.foundOffer:
       offersResponse = self.__getOffers()
+      self.__attempts += 1
       if offersResponse.status_code == 200:
         currentOffers = offersResponse.json().get("offerList")
         currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
@@ -536,7 +537,6 @@ class FlexUnlimited:
         self.push_info("Offer Search", message)
         lastPush = datetime.now()
       
-      self.__attempts += 1
       time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
 
     now = datetime.now()
