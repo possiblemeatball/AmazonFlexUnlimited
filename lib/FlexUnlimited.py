@@ -486,7 +486,7 @@ class FlexUnlimited:
     Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
 
     ignoredOffers = list()
-    activityThread = threading.Thread(target=self.log_activity, args=(now))
+    activityThread = threading.Thread(target=self.log_activity, args=(now,))
     activityThread.start()
 
     while not self.foundOffer:
