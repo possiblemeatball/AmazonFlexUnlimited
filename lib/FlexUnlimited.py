@@ -1,6 +1,6 @@
 from lib.Offer import Offer
 from lib.Log import Log
-import requests, time, os, sys, json, random
+import requests, time, os, sys, json, random, locale
 from requests.models import Response
 from datetime import datetime
 from prettytable import PrettyTable
@@ -418,16 +418,16 @@ class FlexUnlimited:
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        return f"offer blockRate {offer.blockRate} is less than minBlockRate {self.minBlockRate}"
+        return f"offer blockRate ${locale.currency(offer.blockRate)} is less than minBlockRate ${locale.currency(self.minBlockRate)}"
 
     if self.minPayPerHour:
       if offer.ratePerHour < self.minPayPerHour:
-        return f"offer ratePerHour {offer.ratePerHour} is less than minPayPerHour {self.minPayPerHour}"
+        return f"offer ratePerHour ${locale.currency(offer.ratePerHour)}/hr is less than minPayPerHour ${locale.currency(self.minPayPerHour)}/hr"
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
       if deltaTime < self.arrivalBuffer:
-        return f"offer deltaTime {deltaTime} is less than arrivalBuffer {self.arrivalBuffer}"
+        return f"offer deltaTime {str(deltaTime)} is less than arrivalBuffer {str(self.arrivalBuffer)}"
 
     return None
 
