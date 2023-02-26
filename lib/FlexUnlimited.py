@@ -450,31 +450,26 @@ class FlexUnlimited:
 
   def __processOffer(self, offer: Offer):
     if offer.hidden:
-      Log.warn(f"(skipped) offer hidden, either wrong warehouse or wrong startTime/endTime")
-      return False
+      return "offer hidden, either wrong warehouse or wrong startTime/endTime"
 
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
-        Log.warn(f"(skipped) offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}")
-        return False
+        return f"offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}"
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        Log.warn(f"(skipped) offer blockRate {offer.blockRate} is less than minBlockRate {self.minBlockRate}")
-        return False
+        return f"offer blockRate {offer.blockRate} is less than minBlockRate {self.minBlockRate}"
 
     if self.minPayRatePerHour:
       if offer.ratePerHour < self.minPayRatePerHour:
-        Log.warn(f"(skipped) offer ratePerHour {offer.ratePerHour} is less than minPayRatePerHour {self.minPayRatePerHour}")
-        return False
+        return f"offer ratePerHour {offer.ratePerHour} is less than minPayRatePerHour {self.minPayRatePerHour}"
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
       if deltaTime < self.arrivalBuffer:
-        Log.warn(f"(skipped) offer deltaTime {deltaTime} is less than arrivalBuffer {self.arrivalBuffer}")
-        return False
+        return f"offer deltaTime {deltaTime} is less than arrivalBuffer {self.arrivalBuffer}"
 
-    return True
+    return None
 
   def run(self):
     Log.info(f"Starting at {datetime.now().strftime('%T')}")
@@ -486,6 +481,7 @@ class FlexUnlimited:
       self.__offersRequestCount += 1
       if offersResponse.status_code == 200:
         newOffers = 0
+        pushLog = list()
         currentOffers = offersResponse.json().get("offerList")
         currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
                            reverse=True)
@@ -494,7 +490,8 @@ class FlexUnlimited:
           if self.__ignoredOffers.count(offerObject.id) > 0 or self.__failedOffers.count(offerObject.id) > 0:
             continue
 
-          if self.__processOffer(offerObject):
+          processMessage = self.__processOffer(offerObject)
+          if processMessage is None:
             acceptResponse = self.__acceptOffer(offerObject)
             if acceptResponse == 200:
               Log.success(f"Successfully accepted the following offer: \n{offerObject.toString()}")
@@ -508,14 +505,22 @@ class FlexUnlimited:
               self.push_err("Unable to Accept Offer", message)
               self.__failedOffers.append(offerObject.id)
           else:
+            Log.warn(f"skipped {processMessage}")
+            pushLog.append(f"skipped {processMessage}")
             self.__ignoredOffers.append(offerObject.id)
           
           newOffers += 1
         
         Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
+        
+        if len(pushLog) > 0:
+          message = f"Skipped {len(pushLog)} {'offers' if len(pushLog) != 1 else 'offer'}: \n"
+          for push in pushLog:
+            message = message + f"\t{push}\n"
+          self.push_warn("Offer Search", message)
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
-        if self.__rate_limit_number < 4:
+        if self.__rate_limit_number < 3:
           self.__rate_limit_number += 1
         else:
           Log.error(f"400 Rate Limit Reached too many times! ({self.__rate_limit_number} times)")
@@ -531,11 +536,11 @@ class FlexUnlimited:
         self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
       elif offersResponse.status_code == 503:
         minutes_to_wait = 5 * self.__service_unavailable_number
-        if self.__service_unavailable_number < 4:
+        if self.__service_unavailable_number < 3:
           self.__service_unavailable_number += 1
         else:
-          Log.error(f"503 Service Unavailable too many times! ({self.__service_unavailable_number-1} times)")
-          self.push_err("Service Unavailable", f"Service Unavailable too many times! ({self.__service_unavailable_number-1} times)")
+          Log.error(f"503 Service Unavailable too many times! ({self.__service_unavailable_number} times)")
+          self.push_err("Service Unavailable", f"Service Unavailable too many times! ({self.__service_unavailable_number} times)")
           break
         
         Log.warn("503 Service Unavailable, waiting for " + str(minutes_to_wait) + " minutes...")
