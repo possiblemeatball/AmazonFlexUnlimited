@@ -20,7 +20,7 @@ class Offer:
         blockDuration = (self.endTime - self.expirationDate).seconds / 3600
 
         body = f'{self.locationName} ({self.locationId})\n'
-        body += f'Pay: ${currency(self.blockRate)} (${currency(self.ratePerHour)}/hr)\n'
+        body += f'Pay: {currency(self.blockRate)} ({currency(self.ratePerHour)}/hr)\n'
         body += f'Date: {self.expirationDate.strftime("%a %b %d %Y (%m/%d/%y)")}\n'
         body += f'Time: {self.expirationDate.strftime("%I:%M %p")} - {self.endTime.strftime("%I:%M %p")} ({str(blockDuration)} {"hour" if blockDuration == 1 else "hours"})'
 

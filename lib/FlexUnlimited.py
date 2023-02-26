@@ -419,11 +419,11 @@ class FlexUnlimited:
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        return f"offer blockRate ${locale.currency(offer.blockRate)} is less than minBlockRate ${locale.currency(self.minBlockRate)}"
+        return f"offer blockRate {locale.currency(offer.blockRate)} is less than minBlockRate {locale.currency(self.minBlockRate)}"
 
     if self.minPayPerHour:
       if offer.ratePerHour < self.minPayPerHour:
-        return f"offer ratePerHour ${locale.currency(offer.ratePerHour)}/hr is less than minPayPerHour ${locale.currency(self.minPayPerHour)}/hr"
+        return f"offer ratePerHour {locale.currency(offer.ratePerHour)}/hr is less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
