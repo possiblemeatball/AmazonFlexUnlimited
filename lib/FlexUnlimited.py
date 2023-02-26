@@ -542,8 +542,8 @@ class FlexUnlimited:
       minutes = deltaTime.seconds / 60
       message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
       message = message + f"in {str(deltaTime)}, "
-      message = message + f"ignoring {self.__ignoredOffers.count()} bad {'offers' if self.__ignoredOffers.count() != 1 else 'offer'} and "
-      message = message + f"attempting {self.__failedOffers.count()} good {'offers' if self.__failedOffers.count() != 1 else 'offer'}. "
+      message = message + f"ignoring {len(self.__ignoredOffers)} bad {'offers' if len(self.__ignoredOffers) != 1 else 'offer'} and "
+      message = message + f"attempting {len(self.__failedOffers)} good {'offers' if len(self.__failedOffers) != 1 else 'offer'}. "
       message = message + f"({self.__offersRequestCount} {'requests' if self.__offersRequestCount != 1 else 'request'})"
       Log.info(message)
       if (datetime.now() - lastPush).seconds >= 60:
