@@ -69,13 +69,12 @@ class FlexUnlimited:
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
         self.desiredWeekdays = set()
-        self.retryLimit = config["retryLimit"]  # number of jobs retrieval requests to perform
         self.refreshInterval = config["refreshInterval"]  # sets delay in between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
-        self.__retryCount = 0
         self.__rate_limit_number = 1
-        self.__acceptedOffers = []
+        self.__ignoredOffers = 0
+        self.__foundOffers = 0
         self.__startTimestamp = time.time()
         self.__requestHeaders = FlexUnlimited.allHeaders.get("FlexCapacityRequest")
         self.refreshToken = config["refreshToken"]
@@ -325,11 +324,9 @@ class FlexUnlimited:
       FlexUnlimited.routes.get("GetEligibleServiceAreas"),
       headers=self.__requestHeaders)
     if response.status_code == 403:
+      Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      response = self.session.get(
-        FlexUnlimited.routes.get("GetEligibleServiceAreas"),
-        headers=self.__requestHeaders
-      )
+      return __getEligibleServiceAreas(self)
     return response.json().get("serviceAreaIds")
 
   def getAllServiceAreas(self):
@@ -339,11 +336,9 @@ class FlexUnlimited:
       headers=self.__requestHeaders
       )
     if response.status_code == 403:
+      Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      response = self.session.get(
-        FlexUnlimited.routes.get("GetOfferFiltersOptions"),
-        headers=self.__requestHeaders
-      )
+      return getAllServiceAreas(self)
 
     serviceAreaPoolList = response.json().get("serviceAreaPoolList")
     serviceAreasTable = PrettyTable()
@@ -408,11 +403,9 @@ class FlexUnlimited:
       headers=self.__requestHeaders,
       json=self.__offersRequestBody)
     if response.status_code == 403:
+      Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      response = self.session.post(
-        FlexUnlimited.routes.get("GetOffers"),
-        headers=self.__requestHeaders,
-        json=self.__offersRequestBody)
+      return __getOffers(self)
     return response
 
   def __acceptOffer(self, offer: Offer):
@@ -424,11 +417,9 @@ class FlexUnlimited:
       json={"offerId": offer.id})
 
     if request.status_code == 403:
+      Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      request = self.session.post(
-        FlexUnlimited.routes.get("AcceptOffer"),
-        headers=self.__requestHeaders,
-        json={"offerId": offer.id})
+      return __acceptOffer(self, offer)
 
     if request.status_code == 200:
       self.__acceptedOffers.append(offer)
@@ -510,18 +501,27 @@ class FlexUnlimited:
         else:
           self.__rate_limit_number = 1
         self.push_info("Offer Search", "Job Search Resume")
+      elif offersResponse.status_code == 403:
+        Log.error("Access token expired, refreshing...")
+        self.__getFlexAccessToken()
+        continue
       else:
-        self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}", self.ntfyURL, self.ntfyTopic, 4)
+        self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
 
       deltaTime = (self.__startTimestamp - datetime.now()).seconds
       if not deltaTime % 60 and deltaTime != 0:
-        message = ""
+        message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
+        message = message + f"ignoring {self.__ignoredOffers} bad offers and "
+        message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
         self.push_info("Offer Search", message)
+        Log.info(message)
 
       time.sleep(self.refreshInterval)
 
     if found:
       Log.info(f"Stopping at {self.__getAmzDate()} after accepting an offer")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {self.__getAmzDate()} after accepting an offer")
     else:
       Log.error(f"Stopping at {self.__getAmzDate()} after encountering a fatal error")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {self.__getAmzDate()} after encountering a fatal error")
