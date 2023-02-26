@@ -326,7 +326,9 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      return __getEligibleServiceAreas(self)
+      response = self.session.get(
+        FlexUnlimited.routes.get("GetEligibleServiceAreas"),
+        headers=self.__requestHeaders)
     return response.json().get("serviceAreaIds")
 
   def getAllServiceAreas(self):
@@ -338,7 +340,10 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      return getAllServiceAreas(self)
+      response = self.session.get(
+        FlexUnlimited.routes.get("GetOfferFiltersOptions"),
+        headers=self.__requestHeaders
+        )
 
     serviceAreaPoolList = response.json().get("serviceAreaPoolList")
     serviceAreasTable = PrettyTable()
@@ -405,7 +410,10 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      return __getOffers(self)
+      rresponse = self.session.post(
+        FlexUnlimited.routes.get("GetOffers"),
+        headers=self.__requestHeaders,
+        json=self.__offersRequestBody)
     return response
 
   def __acceptOffer(self, offer: Offer):
@@ -419,7 +427,10 @@ class FlexUnlimited:
     if request.status_code == 403:
       Log.error("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      return __acceptOffer(self, offer)
+      request = self.session.post(
+        FlexUnlimited.routes.get("AcceptOffer"),
+        headers=self.__requestHeaders,
+        json={"offerId": offer.id})
 
     if request.status_code == 200:
       self.__acceptedOffers.append(offer)
