@@ -470,24 +470,9 @@ class FlexUnlimited:
 
     return True
 
-  def watch_log(self):
-    while not self.foundOffer and threading.main_thread().is_alive():
-      time.sleep(60)
-
-      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
-      minutes = deltaTime / 60
-      attempted = self.__foundOffers - self.__ignoredOffers
-      message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-      message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
-      message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
-      message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
-      self.push_info("Offer Search", message)
-      Log.info(message)
-
   def run(self):
-    now = datetime.now()
-    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
-    Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.fromtimestamp(self.__startTimestamp, datetime.tzinfo).strftime('%H:%M:%S')}")
+    Log.info(f"Starting at {datetime.fromtimestamp(self.__startTimestamp, datetime.tzinfo).strftime('%H:%M:%S')}")
 
     ignoredOffers = list()
     watchdogThread = threading.Thread(target=self.watch_log)
@@ -536,7 +521,16 @@ class FlexUnlimited:
         self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
-
+      
+      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
+      minutes = deltaTime / 60
+      attempted = self.__foundOffers - self.__ignoredOffers
+      message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
+      message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
+      message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
+      message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
+      self.push_info("Offer Search", message)
+      Log.info(message)
       time.sleep(self.refreshInterval)
 
     now = datetime.now()
