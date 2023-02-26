@@ -436,49 +436,49 @@ class FlexUnlimited:
       self.__acceptedOffers.append(offer)
       self.push_success("Successfully Accepted Offer", offer.toString())
       Log.info(f"Successfully accepted the following offer: \n{offer.toString()}")
-      return true
+      return True
     else:
       message = f'Unable to accept an offer, request response: {request.status_code} '
       message = ("Offer Already Taken" if request.status_code == 410 else "Unknown")
       self.push_err("Unable to Accept Offer", message)
       Log.error(message)
-      return false
+      return False
       
 
   def __processOffer(self, offer: Offer):
     if offer.hidden:
       Log.info("(skipped) offer hidden")
-      return false
+      return False
       
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
         Log.info(f"(skipped) offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}")
-        return false
+        return False
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
         Log.info(f"(skipped) offer blockRate {offer.blockRate} is less than minBlockRate {self.minBlockRate}")
-        return false
+        return False
 
     if self.minPayRatePerHour:
       if offer.ratePerHour < self.minPayRatePerHour:
         Log.info(f"(skipped) offer ratePerHour {offer.ratePerHour} is less than minPayRatePerHour {self.minPayRatePerHour}")
-        return false
+        return False
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
       if deltaTime < self.arrivalBuffer:
         Log.info(f"(skipped) offer deltaTime {deltaTime} is less than arrivalBuffer {self.arrivalBuffer}")
-        return false
+        return False
 
-    return true
+    return True
 
   def run(self):
     self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {self.__getAmzDate()}")
     Log.info(f"Starting at {self.__getAmzDate()}")
 
     ignoredOffers = list()
-    found = false
+    found = False
 
     while not found:
       offersResponse = self.__getOffers()
@@ -494,7 +494,7 @@ class FlexUnlimited:
           if self.__processOffer(offerObject):
             Log.info("Found an offer, attempting to accept...")
             if self.__acceptOffer(offerObject):
-              found = true
+              found = True
               break
             else:
               ignoredOffers.append(offerObject)
