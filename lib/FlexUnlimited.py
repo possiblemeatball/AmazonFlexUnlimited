@@ -454,18 +454,18 @@ class FlexUnlimited:
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        Log.info(f"(skipped) offer blockRate {offer.blockRate} is less than minBlockRate {self.minBlockRate}")
+        Log.info(f"(skipped) offer blockRate {'{0:.3g}'.format(offer.blockRate)} is less than minBlockRate {'{0:.3g}'.format(self.minBlockRate)}")
         return False
 
     if self.minPayRatePerHour:
       if offer.ratePerHour < self.minPayRatePerHour:
-        Log.info(f"(skipped) offer ratePerHour {offer.ratePerHour} is less than minPayRatePerHour {self.minPayRatePerHour}")
+        Log.info(f"(skipped) offer ratePerHour {'{0:.3g}'.format(offer.ratePerHour)} is less than minPayRatePerHour {'{0:.3g}'.format(self.minPayRatePerHour)}")
         return False
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
       if deltaTime < self.arrivalBuffer:
-        Log.info(f"(skipped) offer deltaTime {deltaTime} is less than arrivalBuffer {self.arrivalBuffer}")
+        Log.info(f"(skipped) offer deltaTime {'{0:.2g}'.format(deltaTime)} is less than arrivalBuffer {'{0:.2g}'.format(self.arrivalBuffer)}")
         return False
 
     return True
@@ -526,7 +526,7 @@ class FlexUnlimited:
         minutes = deltaTime / 60
         attempted = self.__foundOffers - self.__ignoredOffers
         message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-        message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
+        message = message + f"in {'{0:.2g}'.format(minutes)} {'minutes' if minutes != 1 else 'minute'}, "
         message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
         message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
         self.push_info("Offer Search", message)
