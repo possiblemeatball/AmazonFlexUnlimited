@@ -474,9 +474,12 @@ class FlexUnlimited:
     while not self.foundOffer and threading.main_thread().is_alive():
       deltaTime = (datetime.now() - start).seconds
       if not deltaTime % 60 and deltaTime != 0:
-        message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
-        message = message + f"ignoring {self.__ignoredOffers} bad offers and "
-        message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
+        minutes = deltaTime / 60
+        attempted = self.__foundOffers - self.__ignoredOffers
+        message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
+        message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
+        message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
+        message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
         self.push_info("Offer Search", message)
         Log.info(message)
       time.sleep(1)
