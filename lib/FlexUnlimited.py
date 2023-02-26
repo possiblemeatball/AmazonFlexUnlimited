@@ -341,9 +341,7 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      response = self.session.get(
-        FlexUnlimited.routes.get("GetEligibleServiceAreas"),
-        headers=self.__requestHeaders)
+      return self.__getEligibleServiceAreas()
     return response.json().get("serviceAreaIds")
 
   def getAllServiceAreas(self):
@@ -355,10 +353,7 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      response = self.session.get(
-        FlexUnlimited.routes.get("GetOfferFiltersOptions"),
-        headers=self.__requestHeaders
-        )
+      return self.getAllServiceAreas()
 
     serviceAreaPoolList = response.json().get("serviceAreaPoolList")
     serviceAreasTable = PrettyTable()
@@ -394,10 +389,7 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      response = self.session.post(
-        FlexUnlimited.routes.get("GetOffers"),
-        headers=self.__requestHeaders,
-        json=self.__offersRequestBody)
+      return self.__getOffers()
     return response
 
   def __acceptOffer(self, offer: Offer):
@@ -411,10 +403,7 @@ class FlexUnlimited:
     if request.status_code == 403:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      request = self.session.post(
-        FlexUnlimited.routes.get("AcceptOffer"),
-        headers=self.__requestHeaders,
-        json={"offerId": offer.id})
+      return self.__acceptOffer(offer)
         
     return request.status_code
       
@@ -444,7 +433,7 @@ class FlexUnlimited:
 
   def run(self):
     Log.info(f"Starting at {datetime.now().strftime('%T')}")
-    self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 2, [])
+    self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, [])
 
     lastPush = datetime.now()
     while not self.foundOffer:
@@ -473,7 +462,7 @@ class FlexUnlimited:
               message = f'Unable to accept an offer, request response: {acceptResponse} '
               message = message + ("Offer Already Taken" if acceptResponse == 410 else "Unknown")
               Log.error(message)
-              self.push_ntfy("Unable to Accept Offer", message, 3, ["no_entry"])
+              self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
               self.__failedOffers.append(offerObject.id)
           else:
             Log.warn(f"skipped {processMessage}")
@@ -487,7 +476,7 @@ class FlexUnlimited:
         if len(pushLog) > 0:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
-            message = message + f" * {push}\n"
+            message = message + f"{push}\n"
           self.push_ntfy("Offer Search", message, 3, ["warning"])
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
@@ -524,6 +513,7 @@ class FlexUnlimited:
       elif offersResponse.status_code == 403:
         Log.warn("Access token expired, refreshing...")
         self.__getFlexAccessToken()
+        continue
       else:
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
         self.push_ntfy("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}", 4, ["rotating_light"])
