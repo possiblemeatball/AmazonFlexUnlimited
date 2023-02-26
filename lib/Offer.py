@@ -1,6 +1,6 @@
 from datetime import datetime
-
 from lib.Log import Log
+from locale import currency
 
 
 class Offer:
@@ -19,23 +19,9 @@ class Offer:
     def toString(self) -> str:
         blockDuration = (self.endTime - self.expirationDate).seconds / 3600
 
-        body = 'Location: ' + self.locationName + '\n'
-        body += 'Date: ' + str(self.expirationDate.month) + '/' + str(self.expirationDate.day) + '\n'
-        body += 'Pay: $' + str(self.blockRate) + ' ($' + str(self.ratePerHour) + '/hr)\n'
-        body += 'Block Duration: ' + str(blockDuration) + f' {"hour" if blockDuration == 1 else "hours"}\n'
-
-        if not self.expirationDate.minute:
-            body += f'Start time: {str(self.expirationDate.hour)}:00\n'
-        elif self.expirationDate.minute < 10:
-            body += f'Start time: {str(self.expirationDate.hour)}:0{str(self.expirationDate.minute)}\n'
-        else:
-            body += f'Start time: {str(self.expirationDate.hour)}:{str(self.expirationDate.minute)}\n'
-
-        if not self.endTime.minute:
-            body += f'End time: {str(self.endTime.hour)}:00\n'
-        elif self.endTime.minute < 10:
-            body += f'End time: {str(self.endTime.hour)}:0{str(self.endTime.minute)}\n'
-        else:
-            body += f'End time: {str(self.endTime.hour)}:{str(self.endTime.minute)}\n'
+        body = f'{self.locationName} ({self.locationId})\n'
+        body += f'Pay: ${currency(self.blockRate)} (${currency(self.ratePerHour)}/hr)\n'
+        body += f'Date: {self.expirationDate.strftime("%a %b %d %Y (%m/%d/%y)")}\n'
+        body += f'Time: {self.expirationDate.strftime("%I:%M %p")} - {self.endTime.strftime("%I:%M %p")} ({str(blockDuration)} {"hour" if blockDuration == 1 else "hours"})'
 
         return body
