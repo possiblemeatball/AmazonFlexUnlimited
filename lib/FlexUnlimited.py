@@ -440,7 +440,7 @@ class FlexUnlimited:
       return True
     else:
       message = f'Unable to accept an offer, request response: {request.status_code} '
-      message = ("Offer Already Taken" if request.status_code == 410 else "Unknown")
+      message = message + ("Offer Already Taken" if request.status_code == 410 else "Unknown")
       self.push_err("Unable to Accept Offer", message)
       Log.error(message)
       return False
@@ -471,7 +471,7 @@ class FlexUnlimited:
     return True
 
   def log_activity(self, start: datetime):
-    while not self.foundOffer:
+    while not self.foundOffer and threading.main_thread().is_alive():
       deltaTime = (datetime.now() - start).seconds
       if not deltaTime % 60 and deltaTime != 0:
         message = f"Discovered {self.__foundOffers} offers in {deltaTime / 60} minutes, "
@@ -479,6 +479,7 @@ class FlexUnlimited:
         message = message + f"attempting {self.__foundOffers - self.__ignoredOffers} good offers."
         self.push_info("Offer Search", message)
         Log.info(message)
+      time.sleep(1)
 
   def run(self):
     now = datetime.now()
@@ -514,19 +515,23 @@ class FlexUnlimited:
           self.__foundOffers += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
-        self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes.")
+        self.push_warn("Rate Limit Reached", "Rate limited, waiting for " + str(minutes_to_wait) + " minutes...")
+        Log.warn("Rate limited, waiting for " + str(minutes_to_wait) + " minutes...")
         time.sleep(minutes_to_wait * 60)
         if self.__rate_limit_number < 4:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        self.push_info("Offer Search", "Job Search Resume")
+        now = datetime.now()
+        self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
+        Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
       elif offersResponse.status_code == 403:
         Log.error("Access token expired, refreshing...")
         self.__getFlexAccessToken()
         continue
       else:
         self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
+        Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
 
       time.sleep(self.refreshInterval)
