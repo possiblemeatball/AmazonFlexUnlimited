@@ -352,6 +352,50 @@ class FlexUnlimited:
       serviceAreasTable.add_row([serviceArea["serviceAreaName"], serviceArea["serviceAreaId"]])
     return serviceAreasTable
 
+  def push_info(self, title: str, message: str):
+    requests.post(self.ntfyURL,
+            data=json.dumps({
+                "topic": self.ntfyTopic,
+                "message": message,
+                "title": title,
+                "tags": ["info"],
+                "priority": 2,
+            })
+        )
+  
+  def push_warn(self, title: str, message: str):
+    requests.post(self.ntfyURL,
+            data=json.dumps({
+                "topic": self.ntfyTopic,
+                "message": message,
+                "title": title,
+                "tags": ["warning"],
+                "priority": 3,
+            })
+        )
+
+  def push_err(self, title: str, message: str):
+    requests.post(self.ntfyURL,
+            data=json.dumps({
+                "topic": self.ntfyTopic,
+                "message": message,
+                "title": title,
+                "tags": ["error"],
+                "priority": 4,
+            })
+        )
+  
+  def push_success(self, title: str, message: str):
+    requests.post(self.ntfyURL,
+            data=json.dumps({
+                "topic": self.ntfyTopic,
+                "message": message,
+                "title": title,
+                "tags": ["success"],
+                "priority": 5,
+            })
+        )
+
   def __getOffers(self) -> Response:
     """
     Get job offers.
@@ -388,60 +432,96 @@ class FlexUnlimited:
 
     if request.status_code == 200:
       self.__acceptedOffers.append(offer)
-      Log.push_info("Successfully Accepted Offer", offer.toString(), self.ntfyURL, self.ntfyTopic, 5)
+      self.push_success("Successfully Accepted Offer", offer.toString())
+      Log.info(f"Successfully accepted the following offer: \n{offer.toString()}")
+      return true
     else:
-      Log.push_error("Unable to Accept Offer", f"Response: {request.status_code} {'Offer Already Taken' if request.status_code == 410 else 'Unknown'}", self.ntfyURL, self.ntfyTopic, 4)
+      message = f'Unable to accept an offer, request response: {request.status_code} '
+      message = ("Offer Already Taken" if request.status_code == 410 else "Unknown")
+      self.push_err("Unable to Accept Offer", message)
+      Log.error(message)
+      return false
+      
 
   def __processOffer(self, offer: Offer):
     if offer.hidden:
-      return
+      Log.info("(skipped) offer hidden")
+      return false
       
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
-        return
+        Log.info(f"(skipped) offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}")
+        return false
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        return
+        Log.info(f"(skipped) offer blockRate {offer.blockRate} is less than minBlockRate {self.minBlockRate}")
+        return false
 
     if self.minPayRatePerHour:
       if offer.ratePerHour < self.minPayRatePerHour:
-        return
+        Log.info(f"(skipped) offer ratePerHour {offer.ratePerHour} is less than minPayRatePerHour {self.minPayRatePerHour}")
+        return false
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
       if deltaTime < self.arrivalBuffer:
-        return
+        Log.info(f"(skipped) offer deltaTime {deltaTime} is less than arrivalBuffer {self.arrivalBuffer}")
+        return false
 
-    self.__acceptOffer(offer)
+    return true
 
   def run(self):
-    Log.push_info("Offer Search", "Searching for offers...", self.ntfyURL, self.ntfyTopic, 1)
-    while self.__retryCount < self.retryLimit:
-      if not self.__retryCount % 50 and self.__retryCount != 0:
-        Log.push_info("Offer Search", f"{self.__retryCount} requests attempted", self.ntfyURL, self.ntfyTopic, 2)
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {self.__getAmzDate()}")
+    Log.info(f"Starting at {self.__getAmzDate()}")
 
+    ignoredOffers = list()
+    found = false
+
+    while not found:
       offersResponse = self.__getOffers()
       if offersResponse.status_code == 200:
         currentOffers = offersResponse.json().get("offerList")
         currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
                            reverse=True)
-        for offer in currentOffers:
-          offerResponseObject = Offer(offerResponseObject=offer)
-          self.__processOffer(offerResponseObject)
-        self.__retryCount += 1
+        for offer in currentOffers:          
+          offerObject = Offer(offerResponseObject=offer)
+          if ignoredOffers.count(offerObject) > 0:
+            continue
+
+          if self.__processOffer(offerObject):
+            Log.info("Found an offer, attempting to accept...")
+            if self.__acceptOffer(offerObject):
+              found = true
+              break
+            else:
+              ignoredOffers.append(offerObject)
+          else:
+            ignoredOffers.append(offerObject)
+            self.__ignoredOffers += 1
+
+          self.__foundOffers += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
-        Log.push_info("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes.", self.ntfyURL, self.ntfyTopic, 3)
+        self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes.")
         time.sleep(minutes_to_wait * 60)
         if self.__rate_limit_number < 4:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        Log.push_info("Offer Search", "Job Search Resume", self.ntfyURL, self.ntfyTopic, 1)
+        self.push_info("Offer Search", "Job Search Resume")
       else:
-        Log.push_error("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}", self.ntfyURL, self.ntfyTopic, 4)
+        self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}", self.ntfyURL, self.ntfyTopic, 4)
         break
+
+      deltaTime = (self.__startTimestamp - datetime.now()).seconds
+      if not deltaTime % 60 and deltaTime != 0:
+        message = ""
+        self.push_info("Offer Search", message)
+
       time.sleep(self.refreshInterval)
-    
-    Log.push_info("Offer Search", f"Done searching for offers, accepted {len(self.__acceptedOffers)} in {time.time() - self.__startTimestamp} seconds", self.ntfyURL, self.ntfyTopic)
+
+    if found:
+      Log.info(f"Stopping at {self.__getAmzDate()} after accepting an offer")
+    else:
+      Log.error(f"Stopping at {self.__getAmzDate()} after encountering a fatal error")
