@@ -325,7 +325,7 @@ class FlexUnlimited:
       FlexUnlimited.routes.get("GetEligibleServiceAreas"),
       headers=self.__requestHeaders)
     if response.status_code == 403:
-      Log.error("Access token expired, refreshing...")
+      Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
       response = self.session.get(
         FlexUnlimited.routes.get("GetEligibleServiceAreas"),
@@ -339,7 +339,7 @@ class FlexUnlimited:
       headers=self.__requestHeaders
       )
     if response.status_code == 403:
-      Log.error("Access token expired, refreshing...")
+      Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
       response = self.session.get(
         FlexUnlimited.routes.get("GetOfferFiltersOptions"),
@@ -409,7 +409,7 @@ class FlexUnlimited:
       headers=self.__requestHeaders,
       json=self.__offersRequestBody)
     if response.status_code == 403:
-      Log.error("Access token expired, refreshing...")
+      Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
       rresponse = self.session.post(
         FlexUnlimited.routes.get("GetOffers"),
@@ -426,7 +426,7 @@ class FlexUnlimited:
       json={"offerId": offer.id})
 
     if request.status_code == 403:
-      Log.error("Access token expired, refreshing...")
+      Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
       request = self.session.post(
         FlexUnlimited.routes.get("AcceptOffer"),
@@ -512,7 +512,7 @@ class FlexUnlimited:
         self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
         Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
       elif offersResponse.status_code == 403:
-        Log.error("Access token expired, refreshing...")
+        Log.warn("Access token expired, refreshing...")
         self.__getFlexAccessToken()
         continue
       else:
