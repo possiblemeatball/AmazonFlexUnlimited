@@ -6,20 +6,16 @@ class Log:
     
     @staticmethod 
     def info(message: str):
-        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        print(f'[{now}] [INFO] {message}', flush=True)
+        print(f'[{datetime.now().strftime("%D %T")}] [INFO] {message}', flush=True)
     
     @staticmethod 
     def warn(message: str):
-        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        print(f'[{now}] [WARN] {message}', flush=True)
+        print(f'[{datetime.now().strftime("%D %T")}] [WARN] {message}', flush=True)
 
     @staticmethod
     def error(message: str):
-        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        print(f'[{now}] [ERROR] {message}', flush=True)
+        print(f'[{datetime.now().strftime("%D %T")}] [ERROR] {message}', flush=True)
 
     @staticmethod 
     def success(message: str):
-        now = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        print(f'[{now}] [SUCCESS] {message}', flush=True)
+        print(f'[{datetime.now().strftime("%D %T")}] [SUCCESS] {message}', flush=True)

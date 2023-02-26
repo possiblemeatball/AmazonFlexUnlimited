@@ -473,8 +473,8 @@ class FlexUnlimited:
     return True
 
   def run(self):
-    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%H:%M:%S')}")
-    Log.info(f"Starting at {datetime.now().strftime('%H:%M:%S')}")
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
+    Log.info(f"Starting at {datetime.now().strftime('%T')}")
 
     ignoredOffers = list()
     lastPush = datetime.now()
@@ -505,15 +505,15 @@ class FlexUnlimited:
           self.__foundOffers += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
-        self.push_warn("Rate Limit Reached", "Rate limited, waiting for " + str(minutes_to_wait) + " minutes...")
+        self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes...")
         Log.warn("Rate limited, waiting for " + str(minutes_to_wait) + " minutes...")
         time.sleep(minutes_to_wait * 60)
         if self.__rate_limit_number < 4:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
-        Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
+        self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
+        Log.info(f"Starting at {datetime.now().strftime('%T')}")
       elif offersResponse.status_code == 403:
         Log.warn("Access token expired, refreshing...")
         self.__getFlexAccessToken()
@@ -523,26 +523,24 @@ class FlexUnlimited:
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
       
-      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
-      minutes = deltaTime / 60
+      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp))
+      minutes = deltaTime.seconds / 60
       attempted = self.__foundOffers - self.__ignoredOffers
       message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-      message = message + f"in {'{0:.2}'.format(minutes)} {'minute' if minutes < 1.1 and minutes >= 1 else 'minutes'}, "
+      message = message + f"in {deltaTime.strftime('%T')}, "
       message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
       message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}. "
       message = message + f"({self.__attempts} {'requests' if self.__attempts != 1 else 'request'})"
       Log.info(message)
-      deltaTime = (datetime.now() - lastPush).seconds
-      if deltaTime >= 60:
+      if (datetime.now() - lastPush).seconds >= 60:
         self.push_info("Offer Search", message)
         lastPush = datetime.now()
       
       time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
 
-    now = datetime.now()
     if self.foundOffer:
-      Log.info(f"Stopping at {now.strftime('%H:%M:%S %Z')} after accepting an offer")
-      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now.strftime('%H:%M:%S %Z')} after accepting an offer")
+      Log.info(f"Stopping at {datetime.now().strftime('%T')} after accepting an offer")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {datetime.now().strftime('%T')} after accepting an offer")
     else:
-      Log.error(f"Stopping at {now.strftime('%H:%M:%S %Z')} after encountering a fatal error")
-      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now.strftime('%H:%M:%S %Z')} after encountering a fatal error")
+      Log.error(f"Stopping at {datetime.now().strftime('%T')} after encountering a fatal error")
+      self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {datetime.now().strftime('%T')} after encountering a fatal error")
