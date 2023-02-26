@@ -471,10 +471,11 @@ class FlexUnlimited:
     return True
 
   def run(self):
-    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.fromtimestamp(self.__startTimestamp, datetime.tzinfo).strftime('%H:%M:%S')}")
-    Log.info(f"Starting at {datetime.fromtimestamp(self.__startTimestamp, datetime.tzinfo).strftime('%H:%M:%S')}")
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%H:%M:%S')}")
+    Log.info(f"Starting at {datetime.now().strftime('%H:%M:%S')}")
 
     ignoredOffers = list()
+    lastReport = datetime.now()
     watchdogThread = threading.Thread(target=self.watch_log)
     watchdogThread.start()
 
@@ -510,7 +511,6 @@ class FlexUnlimited:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        now = datetime.now()
         self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now.strftime('%H:%M:%S %Z')}")
         Log.info(f"Starting at {now.strftime('%H:%M:%S %Z')}")
       elif offersResponse.status_code == 403:
@@ -522,15 +522,18 @@ class FlexUnlimited:
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
       
-      deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
-      minutes = deltaTime / 60
-      attempted = self.__foundOffers - self.__ignoredOffers
-      message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
-      message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
-      message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
-      message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
-      self.push_info("Offer Search", message)
-      Log.info(message)
+      deltaTime = (datetime.now() - lastReport).seconds
+      if deltaTime >= 60:
+        deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp)).seconds
+        minutes = deltaTime / 60
+        attempted = self.__foundOffers - self.__ignoredOffers
+        message = f"Discovered {self.__foundOffers} {'offers' if self.__foundOffers != 1 else 'offer'} "
+        message = message + f"in {minutes} {'minutes' if minutes != 1 else 'minute'}, "
+        message = message + f"ignoring {self.__ignoredOffers} bad {'offers' if self.__ignoredOffers != 1 else 'offer'} and "
+        message = message + f"attempting {attempted} good {'offers' if attempted != 1 else 'offer'}."
+        self.push_info("Offer Search", message)
+        Log.info(message)
+        lastReport = datetime.now()
       time.sleep(self.refreshInterval)
 
     now = datetime.now()
