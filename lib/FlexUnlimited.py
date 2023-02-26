@@ -118,7 +118,7 @@ class FlexUnlimited:
       for day in desiredWeekdays:
         dayAbbreviated = day[:3].lower()
         if dayAbbreviated not in weekdayMap:
-          print("Weekday '" + day + "' is misspelled. Please correct config.json file and restart program.")
+          Log.error("Weekday '" + day + "' is misspelled. Please correct config.json file and restart program.")
           exit()
         self.desiredWeekdays.add(weekdayMap[dayAbbreviated])
       if len(self.desiredWeekdays) == 7:
@@ -126,8 +126,8 @@ class FlexUnlimited:
 
   def __registerAccount(self):
     link = "https://www.amazon.com/ap/signin?ie=UTF8&clientContext=134-9172090-0857541&openid.pape.max_auth_age=0&use_global_authentication=false&accountStatusPolicy=P1&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&use_audio_captcha=false&language=en_US&pageId=amzn_device_na&arb=97b4a0fe-13b8-45fd-b405-ae94b0fec45b&openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fap%2Fmaplanding&openid.assoc_handle=amzn_device_na&openid.oa2.response_type=token&openid.mode=checkid_setup&openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&openid.ns.oa2=http%3A%2F%2Fwww.amazon.com%2Fap%2Fext%2Foauth%2F2&openid.oa2.scope=device_auth_access&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&disableLoginPrepopulate=0&openid.oa2.client_id=device%3A32663430323338643639356262653236326265346136356131376439616135392341314d50534c4643374c3541464b&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0"
-    print("Link: " + link)
-    maplanding_url = input("Open the previous link (make sure to copy the entire link) in a browser, sign in, and enter the entire resulting URL here:\n")
+    Log.warn(link)
+    maplanding_url = input("Open the URL above (make sure to copy the entire URL) in a browser, sign in, and enter the entire resulting URL here:\n")
     parsed_query = parse_qs(urlparse(maplanding_url).query)
     reg_access_token = unquote(parsed_query['openid.oa2.access_token'][0])
     device_id = secrets.token_hex(16)
@@ -185,15 +185,12 @@ class FlexUnlimited:
     }
     res = self.session.post(FlexUnlimited.routes.get("GetAuthToken"), json=amazon_reg_data, headers=reg_headers, verify=True)
     if res.status_code != 200:
-        print("login failed")
+        Log.error("Account login failed, response code: " + res.status_code)
         exit(1)
     res = res.json()
     tokens = res['response']['success']['tokens']['bearer']
     self.accessToken = tokens['access_token']
     self.refreshToken = tokens['refresh_token']
-    print("Displaying refresh token in case config file fails to save tokens.")
-    print("If it fails, copy the refresh token into the config file manually.")
-    print("Refresh token: " + self.refreshToken)
     try:
       with open("config.json", "r+") as configFile:
         config = json.load(configFile)
@@ -204,11 +201,15 @@ class FlexUnlimited:
         configFile.truncate()
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
+      Log.warn("Displaying refresh token because save to config file failed. Please copy the refresh token into the config file manually.")
+      Log.info("Refresh token: " + self.refreshToken)
       sys.exit()
     except FileNotFoundError:
       Log.error("Config file not found. Ensure a properly formatted 'config.json' file exists in the root directory.")
+      Log.warn("Displaying refresh token because save to config file failed. Please copy the refresh token into the config file manually.")
+      Log.info("Refresh token: " + self.refreshToken)
       sys.exit()
-    print("registration successful")
+    Log.success("Account registration successful")
 
   @staticmethod
   def __generate_frc(device_id):
@@ -302,9 +303,9 @@ class FlexUnlimited:
       return response.get("response").get("success").get("tokens").get("bearer").get("access_token")
     except Exception as e:
       twoStepVerificationChallengeUrl = self.__getTwoStepVerificationChallengeUrl(response)
-      print("Unable to authenticate to Amazon Flex.")
-      print(f"\nPlease try completing the two step verification challenge at \033[1m{twoStepVerificationChallengeUrl}\033[0m . Then try again.")
-      print("\nIf you already completed the two step verification, please check your Amazon Flex username and password in the config file and try again.")
+      Log.warn(f"Please try completing the two step verification challenge at \033[1m{twoStepVerificationChallengeUrl}\033[0m")
+      Log.warn("If you already completed the two step verification, please check your Amazon Flex username and password in the config file and try again.")
+      Log.error("Unable to authenticate to Amazon Flex.")
       sys.exit()
 
   """
@@ -356,6 +357,8 @@ class FlexUnlimited:
     return serviceAreasTable
 
   def push_info(self, title: str, message: str):
+    if not self.ntfyURL or not self.ntfyTopic:
+      return
     requests.post(self.ntfyURL,
             data=json.dumps({
                 "topic": self.ntfyTopic,
@@ -367,6 +370,8 @@ class FlexUnlimited:
         )
   
   def push_warn(self, title: str, message: str):
+    if not self.ntfyURL or not self.ntfyTopic:
+      return
     requests.post(self.ntfyURL,
             data=json.dumps({
                 "topic": self.ntfyTopic,
@@ -378,6 +383,8 @@ class FlexUnlimited:
         )
 
   def push_err(self, title: str, message: str):
+    if not self.ntfyURL or not self.ntfyTopic:
+      return
     requests.post(self.ntfyURL,
             data=json.dumps({
                 "topic": self.ntfyTopic,
@@ -389,6 +396,8 @@ class FlexUnlimited:
         )
   
   def push_success(self, title: str, message: str):
+    if not self.ntfyURL or not self.ntfyTopic:
+      return
     requests.post(self.ntfyURL,
             data=json.dumps({
                 "topic": self.ntfyTopic,
@@ -413,7 +422,7 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      rresponse = self.session.post(
+      response = self.session.post(
         FlexUnlimited.routes.get("GetOffers"),
         headers=self.__requestHeaders,
         json=self.__offersRequestBody)
@@ -436,45 +445,48 @@ class FlexUnlimited:
         json={"offerId": offer.id})
 
     if request.status_code == 200:
-      self.__acceptedOffers.append(offer)
+      Log.success(f"Successfully accepted the following offer: \n{offer.toString()}")
       self.push_success("Successfully Accepted Offer", offer.toString())
-      Log.info(f"Successfully accepted the following offer: \n{offer.toString()}")
       return True
     else:
       message = f'Unable to accept an offer, request response: {request.status_code} '
       message = message + ("Offer Already Taken" if request.status_code == 410 else "Unknown")
-      self.push_err("Unable to Accept Offer", message)
       Log.error(message)
+      self.push_err("Unable to Accept Offer", message)
       return False
       
 
   def __processOffer(self, offer: Offer):
+    if offer.hidden:
+      Log.warn(f"(skipped) offer hidden, either wrong warehouse or wrong startTime/endTime")
+      return False
+
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
-        Log.info(f"(skipped) offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}")
+        Log.warn(f"(skipped) offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}")
         return False
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        Log.info(f"(skipped) offer blockRate {'{0:.3g}'.format(offer.blockRate)} is less than minBlockRate {'{0:.3g}'.format(self.minBlockRate)}")
+        Log.warn(f"(skipped) offer blockRate {'{0:.3g}'.format(offer.blockRate)} is less than minBlockRate {'{0:.3g}'.format(self.minBlockRate)}")
         return False
 
     if self.minPayRatePerHour:
       if offer.ratePerHour < self.minPayRatePerHour:
-        Log.info(f"(skipped) offer ratePerHour {'{0:.3g}'.format(offer.ratePerHour)} is less than minPayRatePerHour {'{0:.3g}'.format(self.minPayRatePerHour)}")
+        Log.warn(f"(skipped) offer ratePerHour {'{0:.3g}'.format(offer.ratePerHour)} is less than minPayRatePerHour {'{0:.3g}'.format(self.minPayRatePerHour)}")
         return False
 
     if self.arrivalBuffer:
       deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
       if deltaTime < self.arrivalBuffer:
-        Log.info(f"(skipped) offer deltaTime {'{0:.2g}'.format(deltaTime)} is less than arrivalBuffer {'{0:.2g}'.format(self.arrivalBuffer)}")
+        Log.warn(f"(skipped) offer deltaTime {'{0:.2g}'.format(deltaTime)} is less than arrivalBuffer {'{0:.2g}'.format(self.arrivalBuffer)}")
         return False
 
     return True
 
   def run(self):
-    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
     Log.info(f"Starting at {datetime.now().strftime('%T')}")
+    self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
 
     ignoredOffers = list()
     lastPush = datetime.now()
@@ -488,7 +500,7 @@ class FlexUnlimited:
                            reverse=True)
         for offer in currentOffers:
           offerObject = Offer(offerResponseObject=offer)
-          if ignoredOffers.count(offerObject.id) > 0 or offerObject.hidden:
+          if ignoredOffers.count(offerObject.id) > 0:
             continue
 
           if self.__processOffer(offerObject):
@@ -505,22 +517,21 @@ class FlexUnlimited:
           self.__foundOffers += 1
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
+        Log.warn("Rate limit reached, waiting for " + str(minutes_to_wait) + " minutes...")
         self.push_warn("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes...")
-        Log.warn("Rate limited, waiting for " + str(minutes_to_wait) + " minutes...")
         time.sleep(minutes_to_wait * 60)
         if self.__rate_limit_number < 4:
           self.__rate_limit_number += 1
         else:
           self.__rate_limit_number = 1
-        self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
+        self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}")
       elif offersResponse.status_code == 403:
         Log.warn("Access token expired, refreshing...")
         self.__getFlexAccessToken()
-        continue
       else:
-        self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
+        self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
       
       deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp))
