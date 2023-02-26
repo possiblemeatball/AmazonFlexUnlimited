@@ -57,6 +57,7 @@ class FlexUnlimited:
   }
 
   def __init__(self) -> None:
+    locale.setlocale(locale.LC_ALL, '')
     self.__startTimestamp = time.time()
     self.foundOffer = False
     self.__offersRequestCount = 0
