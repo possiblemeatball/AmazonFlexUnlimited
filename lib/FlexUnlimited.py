@@ -553,7 +553,7 @@ class FlexUnlimited:
         self.push_err("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}")
         break
       
-      if (datetime.now() - lastPush).minutes >= 5:
+      if ((datetime.now() - lastPush).seconds / 60) >= 5:
         deltaTime = (datetime.now() - datetime.fromtimestamp(self.__startTimestamp))
         foundOffers = len(self.__ignoredOffers) + len(self.__failedOffers)
         minutes = deltaTime.seconds / 60
