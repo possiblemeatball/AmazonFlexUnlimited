@@ -474,7 +474,7 @@ class FlexUnlimited:
     return True
 
   def run(self):
-    now = datetime.fromtimestamp(time.gmtime()).strftime("%a %b %d %H:%M:%S %Z")
+    now = datetime.now().strftime("%a %b %d %H:%M:%S %Z")
     self.push_info("Starting Offer Search", f"Amazon Flex Unlimited is starting at {now}")
     Log.info(f"Starting at {now}")
 
@@ -531,7 +531,7 @@ class FlexUnlimited:
 
       time.sleep(self.refreshInterval)
 
-    now = datetime.fromtimestamp(time.gmtime()).strftime("%a %b %d %H:%M:%S %Z")
+    now = datetime.now().strftime("%a %b %d %H:%M:%S %Z")
     if found:
       Log.info(f"Stopping at {now} after accepting an offer")
       self.push_err("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {now} after accepting an offer")
