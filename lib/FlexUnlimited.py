@@ -425,8 +425,9 @@ class FlexUnlimited:
         return f"offer ratePerHour {locale.currency(offer.ratePerHour)}/hr is less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
 
     if self.arrivalBuffer:
-      deltaTime = (offer.expirationDate - datetime.now()).seconds / 60
-      if deltaTime < self.arrivalBuffer:
+      deltaTime = offer.expirationDate - datetime.now()
+      minutes = deltaTime.seconds / 60
+      if minutes < self.arrivalBuffer:
         return f"offer deltaTime {str(deltaTime)} is less than arrivalBuffer {str(self.arrivalBuffer)}"
 
     return None
