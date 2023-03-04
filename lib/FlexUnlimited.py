@@ -439,14 +439,13 @@ class FlexUnlimited:
     lastRequest = datetime.now()
     while not self.foundOffer:
       offersResponse = self.__getOffers()
-      lastRequest = datetime.now()
-      self.__offersRequestCount += 1
       if offersResponse.status_code == 200:
-        newOffers = 0
-        pushLog = list()
         currentOffers = offersResponse.json().get("offerList")
         currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
                            reverse=True)
+        
+        newOffers = 0
+        pushLog = list()
         for offer in currentOffers:
           offerObject = Offer(offerResponseObject=offer)
           if self.__ignoredOffers.count(offerObject.id) > 0 or self.__failedOffers.count(offerObject.id) > 0:
@@ -534,6 +533,8 @@ class FlexUnlimited:
         self.push_ntfy("Offer Search", message, 2, ["heavy_check_mark"])
         lastPush = datetime.now()
       
+      self.__offersRequestCount += 1
+      lastRequest = datetime.now()
       time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
 
     if self.foundOffer:
