@@ -129,7 +129,7 @@ class FlexUnlimited:
       for day in desiredWeekdays:
         dayAbbreviated = day[:3].lower()
         if dayAbbreviated not in weekdayMap:
-          Log.error("Weekday '" + day + "' is misspelled . Please correct config.json file and restart program.")
+          Log.error("Weekday '" + day + "' is misspelled. Please correct config.json file and restart program.")
           exit()
         self.desiredWeekdays.append(weekdayMap[dayAbbreviated])
       if len(self.desiredWeekdays) == 7:
