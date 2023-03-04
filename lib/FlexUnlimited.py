@@ -436,8 +436,10 @@ class FlexUnlimited:
     self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, [])
 
     lastPush = datetime.now()
+    lastRequest = datetime()
     while not self.foundOffer:
       offersResponse = self.__getOffers()
+      lastRequest = datetime.now()
       self.__offersRequestCount += 1
       if offersResponse.status_code == 200:
         newOffers = 0
@@ -471,7 +473,7 @@ class FlexUnlimited:
           
           newOffers += 1
         
-        Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
+        Log.info(f"Waited {str(datetime.now() - lastRequest)}, found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
 
         if len(pushLog) > 0:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
