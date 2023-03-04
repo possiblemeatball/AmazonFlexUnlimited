@@ -90,7 +90,7 @@ class FlexUnlimited:
         self.desiredWarehouses = config["desiredWarehouses"] if len(config["desiredWarehouses"]) >= 1 else []  # list of warehouse ids
         self.desiredStartTime = config["desiredStartTime"]  # start time in military time
         self.desiredEndTime = config["desiredEndTime"]  # end time in military time
-        self.desiredWeekdays = config["desiredWeekdays"]
+        self.__setDesiredWeekdays(config["desiredWeekdays"])
         self.minRefreshInterval = config["minRefreshInterval"]  # sets minimum delay in seconds between getOffers requests
         self.maxRefreshInterval = config["maxRefreshInterval"]  # sets maximum delay in seconds between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
@@ -104,7 +104,6 @@ class FlexUnlimited:
 
     self.__requestHeaders = FlexUnlimited.allHeaders.get("FlexCapacityRequest")
     self.session = requests.Session()
-    self.__setDesiredWeekdays(self.desiredWeekdays)
 
     if self.refreshToken == "":
       self.__registerAccount()
@@ -126,7 +125,6 @@ class FlexUnlimited:
     if len(desiredWeekdays) == 0:
       self.desiredWeekdays = None
     else:
-      self.desiredWeekdays.clear()
       for day in desiredWeekdays:
         dayAbbreviated = day[:3].lower()
         if dayAbbreviated not in weekdayMap:
