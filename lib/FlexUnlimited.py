@@ -125,7 +125,7 @@ class FlexUnlimited:
     if len(desiredWeekdays) == 0:
       self.desiredWeekdays = None
     else:
-      self.desiredWeekdays = set()
+      self.desiredWeekdays = list()
       for day in desiredWeekdays:
         dayAbbreviated = day[:3].lower()
         if dayAbbreviated not in weekdayMap:
