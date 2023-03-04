@@ -436,7 +436,7 @@ class FlexUnlimited:
     self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, [])
 
     lastPush = datetime.now()
-    lastRequest = datetime()
+    lastRequest = datetime.now()
     while not self.foundOffer:
       offersResponse = self.__getOffers()
       lastRequest = datetime.now()
