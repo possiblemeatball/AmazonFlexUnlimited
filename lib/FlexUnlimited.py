@@ -410,7 +410,7 @@ class FlexUnlimited:
 
   def __processOffer(self, offer: Offer):
     if offer.hidden:
-      return "offer hidden, either wrong warehouse or wrong startTime/endTime"
+      return "offer hidden"
 
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
@@ -418,17 +418,17 @@ class FlexUnlimited:
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
-        return f"offer blockRate {locale.currency(offer.blockRate)} is less than minBlockRate {locale.currency(self.minBlockRate)}"
+        return f"offer blockRate {locale.currency(offer.blockRate)} less than minBlockRate {locale.currency(self.minBlockRate)}"
 
     if self.minPayPerHour:
       if offer.ratePerHour < self.minPayPerHour:
-        return f"offer ratePerHour {locale.currency(offer.ratePerHour)}/hr is less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
+        return f"offer ratePerHour {locale.currency(offer.ratePerHour)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
 
     if self.arrivalBuffer:
       deltaTime = offer.expirationDate - datetime.now()
       minutes = deltaTime.seconds / 60
       if minutes < self.arrivalBuffer:
-        return f"offer deltaTime {str(deltaTime)} is less than arrivalBuffer {str(self.arrivalBuffer)}"
+        return f"offer deltaTime {str(deltaTime)} less than arrivalBuffer {str(self.arrivalBuffer)}"
 
     return None
 
@@ -473,8 +473,7 @@ class FlexUnlimited:
           
           newOffers += 1
         
-        Log.info(f"Waited {str(datetime.now() - lastRequest)}, found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
-
+        Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
         if len(pushLog) > 0:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
@@ -510,7 +509,6 @@ class FlexUnlimited:
         time.sleep(minutes_to_wait * 60)
 
         lastPush = datetime.now()
-        self.__startTimestamp = time.time()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
         self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
       elif offersResponse.status_code == 403:
@@ -537,7 +535,13 @@ class FlexUnlimited:
       
       self.__offersRequestCount += 1
       lastRequest = datetime.now()
-      time.sleep(random.uniform(self.minRefreshInterval, self.maxRefreshInterval))
+
+      if self.minRefreshInterval == self.maxRefreshInterval:
+        secondsToWait = self.minRefreshInterval
+      else:
+        secondsToWait = random.uniform(self.minRefreshInterval, self.maxRefreshInterval)
+      Log.info(f"Waiting {secondsToWait} seconds")
+      time.sleep(secondsToWait)
 
     if self.foundOffer:
       Log.info(f"Stopping at {datetime.now().strftime('%T')} after accepting an offer")
