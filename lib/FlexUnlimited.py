@@ -414,7 +414,7 @@ class FlexUnlimited:
 
     if self.desiredWeekdays:
       if offer.weekday not in self.desiredWeekdays:
-        return f"offer weekday {offer.weekday} not in desiredWeekdays {self.desiredWeekdays}"
+        return f"offer weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
 
     if self.minBlockRate:
       if offer.blockRate < self.minBlockRate:
@@ -434,7 +434,7 @@ class FlexUnlimited:
 
   def run(self):
     Log.info(f"Starting at {datetime.now().strftime('%T')}")
-    self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, [])
+    self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
 
     lastPush = datetime.now()
     lastRequest = datetime.now()
@@ -479,7 +479,7 @@ class FlexUnlimited:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
             message = message + f"{push}\n"
-          self.push_ntfy("Offer Search", message, 3, ["warning"])
+          self.push_ntfy("Ignored Offer", message, 3, ["warning"])
       elif offersResponse.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
         if self.__rate_limit_number < 3:
@@ -495,7 +495,7 @@ class FlexUnlimited:
 
         lastPush = datetime.now()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
-        self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, [])
+        self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
       elif offersResponse.status_code == 503:
         minutes_to_wait = 5 * self.__service_unavailable_number
         if self.__service_unavailable_number < 3:
@@ -510,15 +510,16 @@ class FlexUnlimited:
         time.sleep(minutes_to_wait * 60)
 
         lastPush = datetime.now()
+        self.__startTimestamp = time.time()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
-        self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, [])
+        self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
       elif offersResponse.status_code == 403:
         Log.warn("Access token expired, refreshing...")
         self.__getFlexAccessToken()
         continue
       else:
         Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
-        self.push_ntfy("Offer Search", f"An unknown error has occured, response status code {offersResponse.status_code}", 4, ["rotating_light"])
+        self.push_ntfy("Fatal Error", f"An unknown error has occured, response status code {offersResponse.status_code}", 4, ["rotating_light"])
         break
       
       if ((datetime.now() - lastPush).seconds / 60) >= 5:
@@ -531,7 +532,7 @@ class FlexUnlimited:
         message = message + f"attempting {len(self.__failedOffers)} good {'offers' if len(self.__failedOffers) != 1 else 'offer'}. "
         message = message + f"({self.__offersRequestCount} {'requests' if self.__offersRequestCount != 1 else 'request'})"
         Log.info(message)
-        self.push_ntfy("Offer Search", message, 2, ["heavy_check_mark"])
+        self.push_ntfy("Discovery Update", message, 2, ["mag_right"])
         lastPush = datetime.now()
       
       self.__offersRequestCount += 1
@@ -540,7 +541,7 @@ class FlexUnlimited:
 
     if self.foundOffer:
       Log.info(f"Stopping at {datetime.now().strftime('%T')} after accepting an offer")
-      self.push_ntfy("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {datetime.now().strftime('%T')} after accepting an offer", 1, [])
+      self.push_ntfy("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {datetime.now().strftime('%T')} after accepting an offer", 1, ["mag"])
     else:
       Log.error(f"Stopping at {datetime.now().strftime('%T')} after encountering a fatal error")
       self.push_ntfy("Stopping Offer Search", f"Amazon Flex Unlimited is stopping at {datetime.now().strftime('%T')} after encountering a fatal error", 2, ["rotating_light"])
