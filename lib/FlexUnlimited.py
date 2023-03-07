@@ -405,30 +405,22 @@ class FlexUnlimited:
       self.__getFlexAccessToken()
       return self.__acceptOffer(offer)
         
-    return request.status_code
-      
-
-  def __processOffer(self, offer: Offer):
+    return request
+  
+  def __filterOffer(self, offer: Offer):
     if offer.hidden:
-      return "offer hidden"
-
-    if self.desiredWeekdays:
-      if offer.weekday not in self.desiredWeekdays:
-        return f"offer weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
-
-    if self.minBlockRate:
-      if offer.blockRate < self.minBlockRate:
-        return f"offer blockRate {locale.currency(offer.blockRate)} less than minBlockRate {locale.currency(self.minBlockRate)}"
-
-    if self.minPayPerHour:
-      if offer.ratePerHour < self.minPayPerHour:
-        return f"offer ratePerHour {locale.currency(offer.ratePerHour)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
-
-    if self.arrivalBuffer:
+      return f"offerid {offer.id} hidden"
+    elif self.desiredWeekdays and offer.weekday not in self.desiredWeekdays:
+      return f"offerid {offer.id} weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
+    elif self.minBlockRate and offer.priceAmount < self.minBlockRate:
+      return f"offerid {offer.id} priceAmount {locale.currency(offer.priceAmount)} less than minBlockRate {locale.currency(self.minBlockRate)}"
+    elif self.minPayPerHour and offer.payRate < self.minPayPerHour:
+      return f"offerid {offer.id} payRate {locale.currency(offer.payRate)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
+    elif self.arrivalBuffer:
       deltaTime = offer.expirationDate - datetime.now()
       minutes = deltaTime.seconds / 60
       if minutes < self.arrivalBuffer:
-        return f"offer deltaTime {str(deltaTime)} less than arrivalBuffer {str(self.arrivalBuffer)}"
+        return f"offerid {offer.id} deltaTime {str(deltaTime)} less than arrivalBuffer {str(self.arrivalBuffer)}"
 
     return None
 
@@ -437,49 +429,50 @@ class FlexUnlimited:
     self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
 
     lastPush = datetime.now()
-    lastRequest = datetime.now()
     while not self.foundOffer:
-      offersResponse = self.__getOffers()
-      if offersResponse.status_code == 200:
-        currentOffers = offersResponse.json().get("offerList")
-        currentOffers.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
+      response = self.__getOffers()
+      if response.status_code == 200:
+        offerList: list = response.json().get("offerList")
+        offerList.sort(key=lambda pay: int(pay['rateInfo']['priceAmount']),
                            reverse=True)
-        
         newOffers = 0
         pushLog = list()
-        for offer in currentOffers:
-          offerObject = Offer(offerResponseObject=offer)
-          if self.__ignoredOffers.count(offerObject.id) > 0 or self.__failedOffers.count(offerObject.id) > 0:
+        
+        for offerResponseObject in offerList:
+          offer = Offer(offerResponseObject=offerResponseObject)
+          if self.__ignoredOffers.count(offer.id) > 0 or self.__failedOffers.count(offer.id) > 0:
             continue
 
-          processMessage = self.__processOffer(offerObject)
-          if processMessage is None:
-            acceptResponse = self.__acceptOffer(offerObject)
-            if acceptResponse == 200:
-              Log.success(f"Successfully accepted the following offer: \n{offerObject.toString()}")
-              self.push_ntfy("Successfully Accepted Offer", offerObject.toString(), 5, ["tada", "partying_face"])
-              self.foundOffer = True
-              break
-            else:
-              message = f'Unable to accept an offer, request response: {acceptResponse} '
-              message = message + ("Offer Already Taken" if acceptResponse == 410 else "Unknown")
-              Log.error(message)
-              self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
-              self.__failedOffers.append(offerObject.id)
+          filterMessage = self.__filterOffer(offer)
+          if filterMessage is not None:
+            pushLog.append(filterMessage)
+            self.__ignoredOffers.append(offer.id)
+            continue
+
+          request = self.__acceptOffer(offer)
+          if request.status_code == 200:
+            Log.success(f"Successfully accepted the following offer: \n{offer.toString()}")
+            self.push_ntfy("Successfully Accepted Offer", offer.toString(), 5, ["tada", "partying_face"])
+            self.foundOffer = True
+            break
           else:
-            Log.warn(f"skipped {processMessage}")
-            pushLog.append(processMessage)
-            self.__ignoredOffers.append(offerObject.id)
+            message = f'Unable to accept an offer, request response: {request.status_code} '
+            message = message + ("Offer Already Taken" if request.status_code == 410 else "Unknown")
+            Log.error(message)
+            self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
+            self.__failedOffers.append(offer.id)
           
           newOffers += 1
         
-        Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
         if len(pushLog) > 0:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
             message = message + f"{push}\n"
+            Log.warn(push)
           self.push_ntfy("Ignored Offer", message, 3, ["warning"])
-      elif offersResponse.status_code == 400:
+
+        Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
+      elif response.status_code == 400:
         minutes_to_wait = 30 * self.__rate_limit_number
         if self.__rate_limit_number < 3:
           self.__rate_limit_number += 1
@@ -495,8 +488,8 @@ class FlexUnlimited:
         lastPush = datetime.now()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
         self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
-      elif offersResponse.status_code == 503:
-        minutes_to_wait = 5 * self.__service_unavailable_number
+      elif response.status_code == 503:
+        minutes_to_wait = 2 * self.__service_unavailable_number
         if self.__service_unavailable_number < 3:
           self.__service_unavailable_number += 1
         else:
@@ -511,13 +504,13 @@ class FlexUnlimited:
         lastPush = datetime.now()
         Log.info(f"Starting at {datetime.now().strftime('%T')}")
         self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 1, ["mag"])
-      elif offersResponse.status_code == 403:
+      elif response.status_code == 403:
         Log.warn("Access token expired, refreshing...")
         self.__getFlexAccessToken()
         continue
       else:
-        Log.error(f"An unknown error has occured, response status code {offersResponse.status_code}")
-        self.push_ntfy("Fatal Error", f"An unknown error has occured, response status code {offersResponse.status_code}", 4, ["rotating_light"])
+        Log.error(f"An unknown error has occured, response status code {response.status_code}")
+        self.push_ntfy("Fatal Error", f"An unknown error has occured, response status code {response.status_code}", 4, ["rotating_light"])
         break
       
       if ((datetime.now() - lastPush).seconds / 60) >= 5:
@@ -534,13 +527,10 @@ class FlexUnlimited:
         lastPush = datetime.now()
       
       self.__offersRequestCount += 1
-      lastRequest = datetime.now()
-
-      if self.minRefreshInterval == self.maxRefreshInterval:
+      if self.minRefreshInterval >= self.maxRefreshInterval:
         secondsToWait = self.minRefreshInterval
       else:
         secondsToWait = random.uniform(self.minRefreshInterval, self.maxRefreshInterval)
-      Log.info(f"Waiting {secondsToWait} seconds")
       time.sleep(secondsToWait)
 
     if self.foundOffer:
