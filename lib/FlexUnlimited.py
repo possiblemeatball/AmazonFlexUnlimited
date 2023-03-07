@@ -409,18 +409,18 @@ class FlexUnlimited:
   
   def __filterOffer(self, offer: Offer):
     if offer.hidden:
-      return f"offerid {offer.id} hidden"
+      return f"hidden offer"
     elif self.desiredWeekdays and offer.weekday not in self.desiredWeekdays:
-      return f"offerid {offer.id} weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
+      return f"offer weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
     elif self.minBlockRate and offer.priceAmount < self.minBlockRate:
-      return f"offerid {offer.id} priceAmount {locale.currency(offer.priceAmount)} less than minBlockRate {locale.currency(self.minBlockRate)}"
+      return f"offer priceAmount {locale.currency(offer.priceAmount)} less than minBlockRate {locale.currency(self.minBlockRate)}"
     elif self.minPayPerHour and offer.payRate < self.minPayPerHour:
-      return f"offerid {offer.id} payRate {locale.currency(offer.payRate)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
+      return f"offer payRate {locale.currency(offer.payRate)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
     elif self.arrivalBuffer:
       deltaTime = offer.expirationDate - datetime.now()
       minutes = deltaTime.seconds / 60
       if minutes < self.arrivalBuffer:
-        return f"offerid {offer.id} deltaTime {str(deltaTime)} less than arrivalBuffer {str(self.arrivalBuffer)}"
+        return f"offer deltaTime {str(deltaTime)} less than arrivalBuffer {str(self.arrivalBuffer)}"
 
     return None
 
@@ -468,7 +468,7 @@ class FlexUnlimited:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
             message = message + f"{push}\n"
-            Log.warn(push)
+            Log.warn(f"skipped {push}")
           self.push_ntfy("Ignored Offer", message, 3, ["warning"])
 
         Log.info(f"Found {newOffers} new {'offers' if newOffers != 1 else 'offer'}")
