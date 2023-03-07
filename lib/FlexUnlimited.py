@@ -408,7 +408,7 @@ class FlexUnlimited:
     return request
   
   def __filterOffer(self, offer: Offer):
-    if offer.hioffdden:
+    if offer.hidden:
       return f"hidden offer"
     elif self.desiredWeekdays and offer.weekday not in self.desiredWeekdays:
       return f"offer weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
