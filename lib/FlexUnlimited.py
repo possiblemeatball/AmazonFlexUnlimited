@@ -408,7 +408,7 @@ class FlexUnlimited:
     return request
   
   def __filterOffer(self, offer: Offer):
-    if offer.hidden:
+    if offer.hioffdden:
       return f"hidden offer"
     elif self.desiredWeekdays and offer.weekday not in self.desiredWeekdays:
       return f"offer weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
@@ -447,6 +447,7 @@ class FlexUnlimited:
           if filterMessage is not None:
             pushLog.append(filterMessage)
             self.__ignoredOffers.append(offer.id)
+            newOffers += 1
             continue
 
           request = self.__acceptOffer(offer)
@@ -454,6 +455,7 @@ class FlexUnlimited:
             Log.success(f"Successfully accepted the following offer: \n{offer.toString()}")
             self.push_ntfy("Successfully Accepted Offer", offer.toString(), 5, ["tada", "partying_face"])
             self.foundOffer = True
+            newOffers += 1
             break
           else:
             message = f'Unable to accept an offer, request response: {request.status_code} '
@@ -461,9 +463,8 @@ class FlexUnlimited:
             Log.error(message)
             self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
             self.__failedOffers.append(offer.id)
-          
-          newOffers += 1
-        
+            newOffers += 1
+                  
         if len(pushLog) > 0:
           message = f"Ignored {len(pushLog)} bad {'offers' if len(pushLog) != 1 else 'offer'}: \n"
           for push in pushLog:
