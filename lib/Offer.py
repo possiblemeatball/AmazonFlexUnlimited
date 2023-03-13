@@ -23,7 +23,7 @@ class Offer:
     
     def toString(self) -> str:
         body = f'{self.serviceAreaId}\n'
-        body += f'Pay: {currency(self.rateInfo["priceAmount"])} ({currency(self.payRate)}/hr)\n'
+        body += f'Pay: {currency(self.rateInfo["priceAmount"])} ({currency(self.payRate)}/hr) ({self.rateInfo["surgeMultiplier"] if self.rateInfo["surgeMultiplier"] is not None else "NO"} SURGE)\n'
         body += f'Date: {self.startTime.strftime("%a %b %d %Y (%m/%d/%y)")}\n'
         body += f'Time: {self.startTime.strftime("%I:%M %p")} - {self.endTime.strftime("%I:%M %p")} ({str(self.duration.seconds / 3600)} {"hour" if (self.duration.seconds / 3600) == 1 else "hours"})'
 
