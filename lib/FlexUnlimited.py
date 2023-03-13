@@ -412,12 +412,12 @@ class FlexUnlimited:
       return f"hidden offer"
     elif self.desiredWeekdays and offer.weekday not in self.desiredWeekdays:
       return f"offer weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
-    elif self.minBlockRate and offer.priceAmount < self.minBlockRate:
-      return f"offer priceAmount {locale.currency(offer.priceAmount)} less than minBlockRate {locale.currency(self.minBlockRate)}"
+    elif self.minBlockRate and offer.rateInfo['priceAmount'] < self.minBlockRate:
+      return f"offer priceAmount {locale.currency(offer.rateInfo['priceAmount'])} less than minBlockRate {locale.currency(self.minBlockRate)}"
     elif self.minPayPerHour and offer.payRate < self.minPayPerHour:
       return f"offer payRate {locale.currency(offer.payRate)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
     elif self.arrivalBuffer:
-      deltaTime = offer.expirationDate - datetime.now()
+      deltaTime = offer.startTime - datetime.now()
       minutes = deltaTime.seconds / 60
       if minutes < self.arrivalBuffer:
         return f"offer deltaTime {str(deltaTime)} less than arrivalBuffer {str(self.arrivalBuffer)}"
