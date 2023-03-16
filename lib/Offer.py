@@ -20,8 +20,21 @@ class Offer:
         self.duration = self.endTime - self.startTime
         self.payRate = self.rateInfo['priceAmount'] / (self.duration.seconds / 3600)
         self.weekday = self.startTime.weekday()
+
+    def __str__(self) -> str:
+        body = f"Offer("
+        body += f"serviceAreaId={self.serviceAreaId} "
+        body += f"hidden={self.hidden} "
+        body += f"startTime={self.startTime} "
+        body += f"endTime={self.endTime} "
+        body += f"weekday={self.weekday} "
+        body += f"duration={self.duration} "
+        body += f"rateInfo={str(self.rateInfo)} "
+        body += f"payRate={self.payRate}"
+        body += ')'
+        return body
     
-    def toString(self) -> str:
+    def strPretty(self) -> str:
         body = f'{self.serviceAreaId}\n'
         body += f'Pay: {currency(self.rateInfo["priceAmount"])} ({currency(self.payRate)}/hr) ({self.rateInfo["surgeMultiplier"] if self.rateInfo["surgeMultiplier"] is not None else "NO"} SURGE)\n'
         body += f'Date: {self.startTime.strftime("%a %b %d %Y (%m/%d/%y)")}\n'

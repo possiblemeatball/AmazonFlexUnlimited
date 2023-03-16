@@ -411,11 +411,11 @@ class FlexUnlimited:
     if offer.hidden:
       return f"hidden"
     elif self.desiredWeekdays and offer.weekday not in self.desiredWeekdays:
-      return f"weekday {offer.weekday} not in desiredWeekdays {str(self.desiredWeekdays)}"
+      return f"weekday not in desiredWeekdays {str(self.desiredWeekdays)}"
     elif self.minBlockRate and offer.rateInfo['priceAmount'] < self.minBlockRate:
-      return f"priceAmount {locale.currency(offer.rateInfo['priceAmount'])} less than minBlockRate {locale.currency(self.minBlockRate)}"
+      return f"priceAmount less than minBlockRate {locale.currency(self.minBlockRate)}"
     elif self.minPayPerHour and offer.payRate < self.minPayPerHour:
-      return f"payRate {locale.currency(offer.payRate)}/hr less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
+      return f"payRate less than minPayPerHour {locale.currency(self.minPayPerHour)}/hr"
     elif self.arrivalBuffer:
       deltaTime = offer.startTime - datetime.now()
       minutes = deltaTime.seconds / 60
@@ -441,24 +441,25 @@ class FlexUnlimited:
             offer = Offer(offerResponseObject=offerResponseObject)
             if self.__ignoredOffers.count(offer.id) > 0 or self.__failedOffers.count(offer.id) > 0:
               continue
+            Log.info(f"Found new {str}")
 
             filterMsg = self.__filterOffer(offer)
             if filterMsg is not None:
-              Log.warn(f"reason: {filterMsg}\n{offer.toString()}")
+              Log.warn(f"Ignored offer, reason: {filterMsg}")
               self.__ignoredOffers.append(offer.id)
               continue
 
             request = self.__acceptOffer(offer)
             if request.status_code == 200:
-              Log.success(f"Successfully accepted the following offer: \n{offer.toString()}")
-              self.push_ntfy("Successfully Accepted Offer", offer.toString(), 5, ["tada", "partying_face"])
+              Log.success(f"Successfully accepted offer")
+              self.push_ntfy("Successfully Accepted Offer", offer.strPretty(), 5, ["tada", "partying_face"])
               self.foundOffer = True
               break
             else:
-              message = f'Unable to accept the following offer, request response: {request.status_code} '
+              message = f'Unable to accept offer, request response: {request.status_code} '
               message += ("Offer Already Taken" if request.status_code == 410 else "Unknown")
-              message += f"\n{offer.toString()}"
               Log.error(message)
+              message += f"\n{offer.strPretty()}"
               self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
               self.__failedOffers.append(offer.id)
         case 400:
