@@ -25,7 +25,7 @@ class Offer:
     def __str__(self) -> str:
         dict_copy = self.__dict__.copy()
         dict_copy.pop('id')
-        return json.dumps(dict_copy)
+        return json.dumps(dict_copy, default=str)
     
     def strPretty(self) -> str:
         body = f'{self.serviceAreaId}\n'
