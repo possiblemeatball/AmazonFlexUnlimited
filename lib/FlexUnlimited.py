@@ -446,7 +446,6 @@ class FlexUnlimited:
             filterMsg = self.__filterOffer(offer)
             if filterMsg is not None:
               Log.warn(f"Ignored offer, reason: {filterMsg}")
-              self.push_ntfy("Ignored Offer", f"Reason: {filterMsg}\n{offer.strPretty()}", 2, ["warning"])
               self.__ignoredOffers.append(offer.id)
               continue
 
