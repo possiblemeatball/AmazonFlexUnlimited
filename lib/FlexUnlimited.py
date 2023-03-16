@@ -441,7 +441,7 @@ class FlexUnlimited:
             offer = Offer(offerResponseObject=offerResponseObject)
             if self.__ignoredOffers.count(offer.id) > 0 or self.__failedOffers.count(offer.id) > 0:
               continue
-            Log.info(f"Found new {str}")
+            Log.info(f"Found new {str(offer)}")
 
             filterMsg = self.__filterOffer(offer)
             if filterMsg is not None:
