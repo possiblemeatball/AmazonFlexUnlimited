@@ -63,6 +63,7 @@ class FlexUnlimited:
     self.__offersRequestCount = 0
     self.__rate_limit_number = 1
     self.__service_unavailable_number = 1
+    self.__gateway_timeout_number = 1
     self.__ignoredOffers = list()
     self.__failedOffers = list()
 
@@ -477,7 +478,7 @@ class FlexUnlimited:
 
           lastPush = datetime.now()
         case 503:
-          minutes_to_wait = 2 * self.__service_unavailable_number
+          minutes_to_wait = 1 * self.__service_unavailable_number
           if self.__service_unavailable_number < 3:
             self.__service_unavailable_number += 1
           else:
@@ -487,6 +488,20 @@ class FlexUnlimited:
           
           Log.warn("503 Service Unavailable, waiting for " + str(minutes_to_wait) + " minutes...")
           self.push_ntfy("Service Unavailable", "Waiting for " + str(minutes_to_wait) + " minutes...", 3, ["warning"])
+          time.sleep(minutes_to_wait * 60)
+
+          lastPush = datetime.now()
+        case 504:
+          minutes_to_wait = 1 * self.__gateway_timeout_number
+          if self.__gateway_timeout_number < 3:
+            self.__gateway_timeout_number += 1
+          else:
+            Log.error(f"504 Gateway Timeout too many times! ({self.__gateway_timeout_number} times)")
+            self.push_ntfy("Gateway Timeout", f"Gateway Timeout too many times! ({self.__gateway_timeout_number} times)", 4, ["rotating_light"])
+            break
+          
+          Log.warn("504 Gateway Timeout, waiting for " + str(minutes_to_wait) + " minutes...")
+          self.push_ntfy("Gateway Timeout", "Waiting for " + str(minutes_to_wait) + " minutes...", 3, ["warning"])
           time.sleep(minutes_to_wait * 60)
 
           lastPush = datetime.now()
