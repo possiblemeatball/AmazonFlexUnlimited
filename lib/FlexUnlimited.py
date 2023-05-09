@@ -359,7 +359,7 @@ class FlexUnlimited:
     serviceAreaPoolList = response.json().get("serviceAreaPoolList")
     service_areas = dict()
     for service_area in serviceAreaPoolList :
-      service_areas[service_area["serviceAreaId"]] = serviceArea["serviceAreaName"]
+      service_areas[service_area["serviceAreaId"]] = service_area["serviceAreaName"]
     return service_areas
   
   def push_ntfy(self, title: str, message: str, priority: int, tags: list):
