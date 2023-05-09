@@ -1,4 +1,5 @@
 import sys
+from prettytable import PrettyTable
 from lib.FlexUnlimited import FlexUnlimited
 
 if __name__ == "__main__":
@@ -9,7 +10,11 @@ if __name__ == "__main__":
     arg1 = sys.argv[1]
     if (arg1 == "getAllServiceAreas" or arg1 == "--w"):
       print("\n Your service area options:")
-      print(flexUnlimited.get_service_areas(pretty_table=True))
+      serviceAreasTable = PrettyTable()
+      serviceAreasTable.field_names = ["Service Area ID", "Service Area Name"]
+      for serviceArea in flexUnlimited.service_areas_map:
+        serviceAreasTable.add_row(serviceArea)
+      print(serviceAreasTable)
     else:
       print("Invalid argument provided.")
   else:

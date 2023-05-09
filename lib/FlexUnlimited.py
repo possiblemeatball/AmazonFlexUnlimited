@@ -3,7 +3,6 @@ from lib.Log import Log
 import requests, time, os, sys, json, random, locale
 from requests.models import Response
 from datetime import datetime
-from prettytable import PrettyTable
 from urllib.parse import unquote, urlparse, parse_qs
 import base64, hashlib, hmac, gzip, secrets
 import pyaes
@@ -346,7 +345,7 @@ class FlexUnlimited:
       return self.__getEligibleServiceAreas()
     return response.json().get("serviceAreaIds")
 
-  def get_service_areas(self, pretty_table=False):
+  def get_service_areas(self):
     self.__requestHeaders["X-Amz-Date"] = FlexUnlimited.__getAmzDate()
     response = self.session.get(
       FlexUnlimited.routes.get("GetOfferFiltersOptions"),
@@ -356,19 +355,12 @@ class FlexUnlimited:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
       return self.printServiceAreas()
-
-    if pretty_table :
-      serviceAreaPoolList = response.json().get("serviceAreaPoolList")
-      serviceAreasTable = PrettyTable()
-      serviceAreasTable.field_names = ["Service Area Name", "Service Area ID"]
-      for serviceArea in serviceAreaPoolList:
-        serviceAreasTable.add_row([serviceArea["serviceAreaName"], serviceArea["serviceAreaId"]])
-      return serviceAreasTable
-    else :
-      service_areas = dict()
-      for service_area in serviceAreaPoolList :
-        service_areas[service_area["serviceAreaId"]] = serviceArea["serviceAreaName"]
-      return service_areas
+    
+    serviceAreaPoolList = response.json().get("serviceAreaPoolList")
+    service_areas = dict()
+    for service_area in serviceAreaPoolList :
+      service_areas[service_area["serviceAreaId"]] = serviceArea["serviceAreaName"]
+    return service_areas
   
   def push_ntfy(self, title: str, message: str, priority: int, tags: list):
     if not self.ntfyURL or not self.ntfyTopic:
