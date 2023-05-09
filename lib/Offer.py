@@ -2,15 +2,13 @@ from datetime import datetime
 from lib.Log import Log
 import json
 from locale import currency
-from lib.FlexUnlimited import FlexUnlimited
-
 
 class Offer:
 
-    def __init__(self, flex_unlimited: FlexUnlimited, offerResponseObject: object) -> None:
+    def __init__(self, service_areas_map: dict, offerResponseObject: object) -> None:
         self.id = offerResponseObject.get("offerId")
         self.serviceAreaId = offerResponseObject.get('serviceAreaId')
-        self.serviceAreaName = flex_unlimited.service_areas_map[self.serviceAreaId]
+        self.serviceAreaName = service_areas_map[self.serviceAreaId]
         self.hidden = offerResponseObject.get("hidden")
         self.expirationDate = datetime.fromtimestamp(offerResponseObject.get("expirationDate"))
         self.startTime = datetime.fromtimestamp(offerResponseObject.get("startTime"))
