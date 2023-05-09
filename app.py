@@ -13,7 +13,7 @@ if __name__ == "__main__":
       serviceAreasTable = PrettyTable()
       serviceAreasTable.field_names = ["Service Area ID", "Service Area Name"]
       for service_area_key in flexUnlimited.service_areas_map.keys() :
-        serviceAreasTable.add_row(service_area_key, flexUnlimited.service_areas_map[service_area_key])
+        serviceAreasTable.add_row([service_area_key, flexUnlimited.service_areas_map[service_area_key]])
       print(serviceAreasTable)
     else:
       print("Invalid argument provided.")
