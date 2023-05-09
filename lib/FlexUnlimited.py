@@ -56,6 +56,7 @@ class FlexUnlimited:
   }
 
   def __init__(self) -> None:
+    Log.info("Amazon Flex Unlimited initializing")
     locale.setlocale(locale.LC_ALL, '')
     self.__startTimestamp = time.time()
     self.foundOffer = False
@@ -73,7 +74,7 @@ class FlexUnlimited:
         self.password = account["password"]
         self.refreshToken = account["refreshToken"]
         self.accessToken = account["accessToken"]
-
+      Log.info(f"Account information for {self.username} initialized")
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
       sys.exit()
@@ -95,6 +96,7 @@ class FlexUnlimited:
         self.maxRefreshInterval = config["maxRefreshInterval"]  # sets maximum delay in seconds between getOffers requests
         self.ntfyURL = config["ntfyURL"] # URL of a ntfy.sh server to post
         self.ntfyTopic = config["ntfyTopic"] # ntfy.sh topic to post 
+      Log.info("Configuration initialized")
     except KeyError as nullKey:
       Log.error(f'{nullKey} was not set. Please setup FlexUnlimited as described in the README.')
       sys.exit()
@@ -120,6 +122,7 @@ class FlexUnlimited:
       "serviceAreaIds": self.serviceAreaIds
     }
     self.service_areas_map = self.get_service_areas()
+    Log.info("Service Areas loaded successfully")
     
   def __setDesiredWeekdays(self, desiredWeekdays):
     weekdayMap = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
@@ -425,8 +428,8 @@ class FlexUnlimited:
     return None
 
   def run(self):
-    Log.info(f"Starting at {datetime.now().strftime('%T')}")
-    self.push_ntfy("Starting Offer Search", f"Amazon Flex Unlimited is starting at {datetime.now().strftime('%T')}", 3, ["mag"])
+    Log.info(f"Offer search starting at {datetime.now().strftime('%T')}")
+    self.push_ntfy("Starting Offer Search", f"Starting at {datetime.now().strftime('%T')}", 3, ["mag"])
 
     lastPush = datetime.now()
     while not self.foundOffer:

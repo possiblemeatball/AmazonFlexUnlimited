@@ -25,13 +25,15 @@ class Offer:
     def __str__(self) -> str:
         dict_copy = self.__dict__.copy()
         dict_copy.pop('id')
-        dict_copy.pop('serviceAreaId')
         return f"Offer{json.dumps(dict_copy, default=str)}"
     
     def strPretty(self) -> str:
         body = f'{self.serviceAreaName}\n'
-        body += f'Pay: {currency(self.rateInfo["priceAmount"])} ({currency(self.payRate)}/hr) ({self.rateInfo["surgeMultiplier"] if self.rateInfo["surgeMultiplier"] is not None else "NO"} SURGE)\n'
-        body += f'Date: {self.startTime.strftime("%a %b %d %Y (%m/%d/%y)")}\n'
-        body += f'Time: {self.startTime.strftime("%I:%M %p")} - {self.endTime.strftime("%I:%M %p")} ({str(self.duration.seconds / 3600)} {"hour" if (self.duration.seconds / 3600) == 1 else "hours"})'
+        body += f'{self.startTime.strftime("%a %b %d %Y (%m/%d/%y)")}\n'
+        body += f'{self.startTime.strftime("%I:%M %p")} - {self.endTime.strftime("%I:%M %p")} ({str(self.duration.seconds / 3600)} {"hour" if (self.duration.seconds / 3600) == 1 else "hours"})\n'
+
+        body += f'{currency(self.rateInfo["priceAmount"])} ({currency(self.payRate)}/hr)'
+        if self.rateInfo["surgeMultiplier"] is not None :
+            body += f' ({self.rateInfo["surgeMultiplier"]}'
 
         return body
