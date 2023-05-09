@@ -34,6 +34,6 @@ class Offer:
 
         body += f'{currency(self.rateInfo["priceAmount"])} ({currency(self.payRate)}/hr)'
         if self.rateInfo["surgeMultiplier"] is not None :
-            body += f' ({self.rateInfo["surgeMultiplier"]}'
+            body += f' ({self.rateInfo["surgeMultiplier"]})'
 
         return body
