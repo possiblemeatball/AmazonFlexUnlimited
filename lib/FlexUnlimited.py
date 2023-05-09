@@ -346,7 +346,7 @@ class FlexUnlimited:
       return self.__getEligibleServiceAreas()
     return response.json().get("serviceAreaIds")
 
-  def get_service_areas(self, pretty_table: False):
+  def get_service_areas(self, pretty_table=False):
     self.__requestHeaders["X-Amz-Date"] = FlexUnlimited.__getAmzDate()
     response = self.session.get(
       FlexUnlimited.routes.get("GetOfferFiltersOptions"),
