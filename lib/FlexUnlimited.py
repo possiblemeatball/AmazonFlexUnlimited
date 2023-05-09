@@ -120,6 +120,7 @@ class FlexUnlimited:
       },
       "serviceAreaIds": self.serviceAreaIds
     }
+    self.service_areas_map = self.get_service_areas()
     
   def __setDesiredWeekdays(self, desiredWeekdays):
     weekdayMap = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
@@ -345,7 +346,7 @@ class FlexUnlimited:
       return self.__getEligibleServiceAreas()
     return response.json().get("serviceAreaIds")
 
-  def getAllServiceAreas(self):
+  def get_service_areas(self, pretty_table: False):
     self.__requestHeaders["X-Amz-Date"] = FlexUnlimited.__getAmzDate()
     response = self.session.get(
       FlexUnlimited.routes.get("GetOfferFiltersOptions"),
@@ -354,14 +355,20 @@ class FlexUnlimited:
     if response.status_code == 403:
       Log.warn("Access token expired, refreshing...")
       self.__getFlexAccessToken()
-      return self.getAllServiceAreas()
+      return self.printServiceAreas()
 
-    serviceAreaPoolList = response.json().get("serviceAreaPoolList")
-    serviceAreasTable = PrettyTable()
-    serviceAreasTable.field_names = ["Service Area Name", "Service Area ID"]
-    for serviceArea in serviceAreaPoolList:
-      serviceAreasTable.add_row([serviceArea["serviceAreaName"], serviceArea["serviceAreaId"]])
-    return serviceAreasTable
+    if pretty_table :
+      serviceAreaPoolList = response.json().get("serviceAreaPoolList")
+      serviceAreasTable = PrettyTable()
+      serviceAreasTable.field_names = ["Service Area Name", "Service Area ID"]
+      for serviceArea in serviceAreaPoolList:
+        serviceAreasTable.add_row([serviceArea["serviceAreaName"], serviceArea["serviceAreaId"]])
+      return serviceAreasTable
+    else :
+      service_areas = dict()
+      for service_area in serviceAreaPoolList :
+        service_areas[service_area["serviceAreaId"]] = serviceArea["serviceAreaName"]
+      return service_areas
   
   def push_ntfy(self, title: str, message: str, priority: int, tags: list):
     if not self.ntfyURL or not self.ntfyTopic:
@@ -439,7 +446,7 @@ class FlexUnlimited:
                             reverse=True)
 
           for offerResponseObject in offerList:
-            offer = Offer(offerResponseObject=offerResponseObject)
+            offer = Offer(self, offerResponseObject=offerResponseObject)
             if self.__ignoredOffers.count(offer.id) > 0 or self.__failedOffers.count(offer.id) > 0:
               continue
             Log.info(f"Found new {str(offer)}")

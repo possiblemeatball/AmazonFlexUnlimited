@@ -9,7 +9,7 @@ if __name__ == "__main__":
     arg1 = sys.argv[1]
     if (arg1 == "getAllServiceAreas" or arg1 == "--w"):
       print("\n Your service area options:")
-      print(flexUnlimited.getAllServiceAreas())
+      print(flexUnlimited.get_service_areas(pretty_table=True))
     else:
       print("Invalid argument provided.")
   else:
