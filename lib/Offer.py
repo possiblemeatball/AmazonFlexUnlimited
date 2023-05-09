@@ -2,7 +2,7 @@ from datetime import datetime
 from lib.Log import Log
 import json
 from locale import currency
-from FlexUnlimited import FlexUnlimited
+from lib.FlexUnlimited import FlexUnlimited
 
 
 class Offer:
