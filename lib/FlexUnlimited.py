@@ -458,12 +458,10 @@ class FlexUnlimited:
                 Log.success(f"Successfully accepted offer")
                 self.push_ntfy("Successfully Accepted Offer", offer.strPretty(), 5, ["tada", "partying_face"])
                 self.foundOffer = True
-                break
               case 307:
                 Log.warn(f"You must complete a captcha in order to accept an offer.")
                 self.push_ntfy("Solve Captcha Needed", "You must complete a captcha in order to accept an offer.", 4, ["no_entry"])
                 input("Press any key once the captcha has been complete.")
-                break
               case _:
                 message = f'Unable to accept offer, request response: {request.status_code} '
                 message += ("Offer Already Taken" if request.status_code == 410 else "Unknown")
@@ -471,6 +469,7 @@ class FlexUnlimited:
                 message += f"\n{offer.strPretty()}"
                 self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
                 self.__failedOffers.append(offer.id)
+            break
         case 400:
           minutes_to_wait = 30 * self.__rate_limit_number
           if self.__rate_limit_number < 3:
