@@ -464,7 +464,7 @@ class FlexUnlimited:
                 input("Press any key once the captcha has been complete.")
               case _:
                 message = f'Unable to accept offer, request response: {request.status_code} '
-                message += ("Offer Already Taken" if request.status_code == 410 else "Unknown")
+                message += ("Gone" if request.status_code == 410 else "Unknown")
                 Log.error(message)
                 message += f"\n{offer.strPretty()}"
                 self.push_ntfy("Unable to Accept Offer", message, 4, ["no_entry"])
@@ -482,8 +482,6 @@ class FlexUnlimited:
           Log.warn("400 Rate Limit Reached, waiting for " + str(minutes_to_wait) + " minutes...")
           self.push_ntfy("Rate Limit Reached", "Waiting for " + str(minutes_to_wait) + " minutes...", 3, ["warning"])
           time.sleep(minutes_to_wait * 60)
-
-          lastPush = datetime.now()
         case 503:
           minutes_to_wait = 1 * self.__service_unavailable_number
           if self.__service_unavailable_number < 3:
@@ -496,8 +494,6 @@ class FlexUnlimited:
           Log.warn("503 Service Unavailable, waiting for " + str(minutes_to_wait) + " minutes...")
           self.push_ntfy("Service Unavailable", "Waiting for " + str(minutes_to_wait) + " minutes...", 3, ["warning"])
           time.sleep(minutes_to_wait * 60)
-
-          lastPush = datetime.now()
         case 504:
           minutes_to_wait = 1 * self.__gateway_timeout_number
           if self.__gateway_timeout_number < 3:
@@ -510,8 +506,6 @@ class FlexUnlimited:
           Log.warn("504 Gateway Timeout, waiting for " + str(minutes_to_wait) + " minutes...")
           self.push_ntfy("Gateway Timeout", "Waiting for " + str(minutes_to_wait) + " minutes...", 3, ["warning"])
           time.sleep(minutes_to_wait * 60)
-
-          lastPush = datetime.now()
         case 403:
           Log.warn("Access token expired, refreshing...")
           self.__getFlexAccessToken()
